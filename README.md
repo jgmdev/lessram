@@ -3,6 +3,59 @@
 PHP implementations of array data structures that consume less memory
 than native php arrays with the drawback of been less performant:
 
+## Usage
+
+Currently the project only implement two array structures that implement 
+ArrayAccess, Countable, Serializable and Iterator, these two structures are:
+
+* StaticArray - Can dynamically grow but elements on it can not be modified.
+* DynamicArray - Can dynamically grow and elements on it can be modified or removed.
+
+Both of the only support numeric keys, additional implementations with supports
+for string indexes may be added later.
+
+**StaticArray Example:**
+
+```php
+$list = new LessRam\StaticArray();
+$list[] = "value1";
+$list[] = "value2";
+$list[] = ["index" => "somearray"];
+
+foreach($list as $value)
+{
+  echo $value;
+}
+
+$list->clear();
+```
+
+**DynamicArray Example:**
+
+```php
+$list = new LessRam\Dynamic();
+$list[] = "value1";
+$list[] = "value2";
+$list[] = ["index" => "somearray"];
+
+foreach($list as $value)
+{
+  echo $value;
+}
+
+$list[0] = "newvalue";
+unset($list[1]); // Remove value2
+print_r($list[1]); // show array which now took place of value2
+
+$list->clear();
+```
+
+As you can see on the examples above, beside storing strings they can also
+store arrays and even objects, when inserting such variables they are serialized
+which results in memory savings, and unserilizing when access to it is needed.
+This saves a lot of memory but impacts performance, so you should weight your
+requirements. For more info on performance check the benchmarks below.
+
 ## Benchmark
 
 The first results shown below are inserting a string to each of the tested 
@@ -51,7 +104,8 @@ Array store test:
    memory usage | 57MB            | 46MB            | 489MB              
 ```
 
-To run your own benchmarks run:
+I can say that the best balance between memory usage and performance is 
+achieved with the **StaticArray** implementation. To run your own benchmarks run:
 
 ```sh
 cd lessram

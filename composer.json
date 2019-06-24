@@ -1,0 +1,22 @@
+{
+    "name": "jgmdev/lessram",
+    "description": "Pure PHP implementations of array data structures that use less memory.",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jefferson González",
+            "email": "jgmdev@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "LessRam\\": "lib/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^8.2"
+    }
+}

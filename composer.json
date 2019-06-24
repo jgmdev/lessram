@@ -1,6 +1,6 @@
 {
     "name": "jgmdev/lessram",
-    "description": "Pure PHP implementations of array data structures that use less memory.",
+    "description": "Pure PHP implementation of array data structures that uses less memory.",
     "license": "MIT",
     "authors": [
         {

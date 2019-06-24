@@ -11,7 +11,7 @@ ArrayAccess, Countable, Serializable and Iterator, these two structures are:
 * StaticArray - Can dynamically grow but elements on it can not be modified.
 * DynamicArray - Can dynamically grow and elements on it can be modified or removed.
 
-Both of the only support numeric keys, additional implementations with supports
+Both of them only support numeric keys, additional implementations with supports
 for string indexes may be added later.
 
 **StaticArray Example:**

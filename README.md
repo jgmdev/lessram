@@ -33,7 +33,7 @@ $list->clear();
 **DynamicArray Example:**
 
 ```php
-$list = new LessRam\Dynamic();
+$list = new LessRam\DynamicArray();
 $list[] = "value1";
 $list[] = "value2";
 $list[] = ["index" => "somearray"];

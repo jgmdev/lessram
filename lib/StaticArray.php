@@ -93,7 +93,7 @@ class StaticArray implements \ArrayAccess, \Countable, \Serializable, \Iterator
 
         $index = "";
         
-        while($this->index{$index_pos} != "|" && $index_pos < $index_size)
+        while($index_pos < $index_size && $this->index{$index_pos} != "|")
         {
             $index .= $this->index{$index_pos};
             $index_pos++;
@@ -120,7 +120,7 @@ class StaticArray implements \ArrayAccess, \Countable, \Serializable, \Iterator
 
             $index = "";
             
-            while($this->index{$index_pos} != "|" && $index_pos < $index_size)
+            while($index_pos < $index_size && $this->index{$index_pos} != "|")
             {
                 $index .= $this->index{$index_pos};
                 $index_pos++;
@@ -218,17 +218,22 @@ class StaticArray implements \ArrayAccess, \Countable, \Serializable, \Iterator
 
     public function serialize (): string
     {
-        return serialize([$this->index, $this->elements]);
+        return serialize([
+            "index" => $this->index, 
+            "elements" => $this->elements,
+            "elements_len" => $this->elements_len,
+            "list_size" => $this->list_size
+        ]);
     }
 
     public function unserialize ($serialized)
     {
         $data = unserialize($serialized);
         
-        $this->index = $data[0];
-        $this->elements = $data[1];
-        $this->elements_len = strlen($this->elements);
-        $this->list_size = substr_count($this->index, "|");
+        $this->index = $data["index"];
+        $this->elements = $data["elements"];
+        $this->elements_len = $data["elements_len"];
+        $this->list_size = $data["list_size"];
     }
 
     public function rewind() 
@@ -246,7 +251,7 @@ class StaticArray implements \ArrayAccess, \Countable, \Serializable, \Iterator
 
         $index = "";
         
-        while($this->index{$index_pos} != "|" && $index_pos < $index_size)
+        while($index_pos < $index_size && $this->index{$index_pos} != "|")
         {
             $index .= $this->index{$index_pos};
             $index_pos++;

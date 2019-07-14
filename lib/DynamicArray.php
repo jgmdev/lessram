@@ -31,7 +31,7 @@ class DynamicArray implements \ArrayAccess, \Countable, \Serializable, \Iterator
     {
         if(!is_string($value))
         {
-            $value = "\0:".serialize($value);
+            $value = "\0:".json_encode($value);
         }
 
         $value = str_replace("~", "\\~", $value);
@@ -47,7 +47,7 @@ class DynamicArray implements \ArrayAccess, \Countable, \Serializable, \Iterator
     {
         if(!is_string($value))
         {
-            $value = "\0:".serialize($value);
+            $value = "\0:".json_encode($value);
         }
         
         $value = str_replace("~", "\\~", $value);
@@ -66,7 +66,7 @@ class DynamicArray implements \ArrayAccess, \Countable, \Serializable, \Iterator
 
         if(!is_string($value))
         {
-            $value = "\0:".serialize($value);
+            $value = "\0:".json_encode($value);
         }
 
         $value = str_replace("~", "\\~", $value);
@@ -121,7 +121,7 @@ class DynamicArray implements \ArrayAccess, \Countable, \Serializable, \Iterator
         }
 
         if(substr($value, 0, 2) == "\0:"){
-            return unserialize(substr_replace($value, "", 0, 2));
+            return json_decode(substr_replace($value, "", 0, 2), true);
         }
 
         return $value;
@@ -322,7 +322,7 @@ class DynamicArray implements \ArrayAccess, \Countable, \Serializable, \Iterator
                 $i--;
 
                 if(substr($value, 0, 2) == "\0:"){
-                    $value = unserialize(substr_replace($value, "", 0, 2));
+                    $value = json_decode(substr_replace($value, "", 0, 2), true);
                 }
 
                 yield $value;
@@ -486,7 +486,7 @@ class DynamicArray implements \ArrayAccess, \Countable, \Serializable, \Iterator
                 $this->current_position = $i;
 
                 if(substr($value, 0, 2) == "\0:"){
-                    $value = unserialize(substr_replace($value, "", 0, 2));
+                    $value = json_decode(substr_replace($value, "", 0, 2), true);
                 }
 
                 return $value;

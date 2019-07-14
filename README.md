@@ -73,24 +73,24 @@ $list[] = "hello world" . $i;
 String store test:
 =======================================================================
         Measure | StaticArray     | DynamicArray    | SplFixedArray   | Native
-    add 1048577 | 0.41s           | 0.30s           | 0.10s           | 0.14s
+    add 1048577 | 0.42s           | 0.29s           | 0.10s           | 0.15s
   get two items | 0.00s           | 0.00s           | 0.00s           | 0.00s
-       loop all | 1.42s           | 2.22s           | 0.03s           | 0.02s
-      serialize | 0.08s           | 0.04s           | 0.19s           | 0.29s
-    unserialize | 0.05s           | 0.03s           | 0.33s           | 0.14s
-     total time | 1.96s           | 2.59s           | 0.67s           | 0.64s
+       loop all | 1.31s           | 2.11s           | 0.03s           | 0.02s
+      serialize | 0.08s           | 0.04s           | 0.20s           | 0.31s
+    unserialize | 0.05s           | 0.03s           | 0.34s           | 0.15s
+     total time | 1.87s           | 2.48s           | 0.69s           | 0.66s
    memory usage | 29MB            | 19MB            | 129MB           | 113MB
 
 =======================================================================
 String store test gzipped (StaticArray and DynamicArray not compressed):
 =======================================================================
         Measure | StaticArray     | DynamicArray    | SplFixedArray   | Native
-    add 1048577 | 0.42s           | 0.34s           | 31.72s          | 10.99s
+    add 1048577 | 0.44s           | 0.35s           | 31.95s          | 10.72s
   get two items | 0.00s           | 0.00s           | 0.00s           | 0.00s
-       loop all | 1.28s           | 2.21s           | 0.03s           | 0.02s
-      serialize | 0.08s           | 0.04s           | 0.41s           | 0.17s
+       loop all | 1.28s           | 2.10s           | 0.03s           | 0.02s
+      serialize | 0.08s           | 0.05s           | 0.44s           | 0.16s
     unserialize | 0.05s           | 0.03s           | 0.28s           | 0.15s
-     total time | 1.83s           | 2.62s           | 32.44s          | 11.38s
+     total time | 1.86s           | 2.53s           | 32.71s          | 11.09s
    memory usage | 29MB            | 19MB            | 129MB           | 113MB
 ```
 
@@ -108,25 +108,25 @@ $list[] = ["name" => "hello world" . $i];
 Array store test:
 =======================================================================
         Measure | StaticArray     | DynamicArray    | SplFixedArray   | Native
-    add 1048577 | 0.88s           | 0.66s           | 0.35s           | 0.23s
+    add 1048577 | 0.79s           | 0.60s           | 0.34s           | 0.24s
   get two items | 0.00s           | 0.00s           | 0.00s           | 0.00s
-       loop all | 2.09s           | 6.23s           | 0.24s           | 0.13s
-      serialize | 0.15s           | 0.12s           | 0.44s           | 0.87s
-    unserialize | 0.12s           | 0.09s           | 1.36s           | 0.69s
-     total time | 3.25s           | 7.11s           | 2.41s           | 2.12s
-   memory usage | 57MB            | 46MB            | 505MB           | 489MB
+       loop all | 1.99s           | 4.36s           | 0.23s           | 0.12s
+      serialize | 0.12s           | 0.08s           | 0.43s           | 0.84s
+    unserialize | 0.08s           | 0.06s           | 1.24s           | 0.67s
+     total time | 2.98s           | 5.10s           | 2.25s           | 2.06s
+   memory usage | 42MB            | 32MB            | 505MB           | 489MB
 
 =======================================================================
 Array store test gzipped (StaticArray and DynamicArray not compressed):
 =======================================================================
         Measure | StaticArray     | DynamicArray    | SplFixedArray   | Native
-    add 1048577 | 0.75s           | 0.69s           | 71.37s          | 13.97s
+    add 1048577 | 0.76s           | 0.66s           | 70.51s          | 13.86s
   get two items | 0.00s           | 0.00s           | 0.00s           | 0.00s
-       loop all | 2.09s           | 6.05s           | 0.03s           | 0.03s
-      serialize | 0.15s           | 0.11s           | 0.58s           | 0.69s
-    unserialize | 0.10s           | 0.08s           | 0.39s           | 0.17s
-     total time | 3.09s           | 6.94s           | 72.38s          | 14.92s
-   memory usage | 57MB            | 46MB            | 161MB           | 145MB
+       loop all | 1.96s           | 4.36s           | 0.03s           | 0.03s
+      serialize | 0.11s           | 0.08s           | 0.60s           | 0.74s
+    unserialize | 0.07s           | 0.05s           | 0.38s           | 0.17s
+     total time | 2.91s           | 5.15s           | 71.53s          | 14.85s
+   memory usage | 42MB            | 32MB            | 161MB           | 145MB
 ```
 
 I can say that the best balance between memory usage and performance is

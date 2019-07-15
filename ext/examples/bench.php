@@ -63,6 +63,54 @@ function test_storeStrings($amount=1048577)
     $splfixed_total_time = microtime(true) - $splfixed_total_time;
 
 
+    // Mesure Ds
+    if(class_exists("\\Ds\\Vector"))
+    {
+        // Vector
+        $dsvector_total_time = microtime(true);
+        $list = new \Ds\Vector();
+
+        // adding items
+        $dsvector_add_time = microtime(true);
+        for($i=0; $i<=$amount; $i++)
+        {
+            $list->push("hello world" . $i);
+        }
+        $dsvector_add_time = microtime(true) - $dsvector_add_time;
+
+        // loop all data
+        $dsvector_loop_time = microtime(true);
+        foreach($list as $value){}
+        $dsvector_loop_time = microtime(true) - $dsvector_loop_time;
+
+        $dsvector_memory_usage = ceil(memory_get_usage(false) / 1024 / 1024) . "MB";
+
+        $dsvector_total_time = microtime(true) - $dsvector_total_time;
+
+
+        // Map
+        $dsmap_total_time = microtime(true);
+        $list = new \Ds\Map();
+
+        // adding items
+        $dsmap_add_time = microtime(true);
+        for($i=0; $i<=$amount; $i++)
+        {
+            $list->put($i, "hello world" . $i);
+        }
+        $dsmap_add_time = microtime(true) - $dsmap_add_time;
+
+        // loop all data
+        $dsmap_loop_time = microtime(true);
+        foreach($list as $value){}
+        $dsmap_loop_time = microtime(true) - $dsmap_loop_time;
+
+        $dsmap_memory_usage = ceil(memory_get_usage(false) / 1024 / 1024) . "MB";
+
+        $dsmap_total_time = microtime(true) - $dsmap_total_time;
+    }
+
+
     // Measure native
     $native_total_time = microtime(true);
     $list = [];
@@ -84,45 +132,62 @@ function test_storeStrings($amount=1048577)
 
     $native_total_time = microtime(true) - $native_total_time;
 
-    $format = "%15.15s | %-15.15s | %-15.15s | %-15.15s\n";
-    
+    $format = "%15.15s | %10.10s | %8.8s | %10.10s | %13.13s\n";
+
     printf(
-        $format, 
-        'Measure', 
-        "DynamicArray",
-        'SplFixedArray', 
-        "Native"
-    );
-    
-    printf(
-        $format, 
-        'add '.$amount, 
-        number_format($dynamic_add_time, 2) . "s",
-        number_format($splfixed_add_time, 2) . "s",  
-        number_format($native_add_time, 2) . "s"
-    );
-    
-    printf(
-        $format, 
-        'loop all', 
-        number_format($dynamic_loop_time, 2) . "s",
-        number_format($splfixed_loop_time, 2) . "s",  
-        number_format($native_loop_time, 2) . "s"
-    );
-    
-    printf(
-        $format, 
-        'total time', 
-        number_format($dynamic_total_time, 2) . "s",
-        number_format($splfixed_total_time, 2) . "s",  
-        number_format($native_total_time, 2) . "s"
+        $format,
+        'Structures',
+        'add '.$amount,
+        'loop all',
+        'total time',
+        'memory usage',
     );
 
     printf(
-        $format, 
-        'memory usage',
-        $dynamic_memory_usage,
-        $splfixed_memory_usage,
+        $format,
+        'DynamicArray',
+        number_format($dynamic_add_time, 2) . "s",
+        number_format($dynamic_loop_time, 2) . "s",
+        number_format($dynamic_total_time, 2) . "s",
+        $dynamic_memory_usage
+    );
+
+    printf(
+        $format,
+        'SplFixedArray',
+        number_format($splfixed_add_time, 2) . "s",
+        number_format($splfixed_loop_time, 2) . "s",
+        number_format($splfixed_total_time, 2) . "s",
+        $splfixed_memory_usage
+    );
+
+    if(class_exists("\\Ds\\Vector"))
+    {
+        printf(
+            $format,
+            'Ds\Vector',
+            number_format($dsvector_add_time, 2) . "s",
+            number_format($dsvector_loop_time, 2) . "s",
+            number_format($dsvector_total_time, 2) . "s",
+            $dsvector_memory_usage
+        );
+
+        printf(
+            $format,
+            'Ds\Map',
+            number_format($dsmap_add_time, 2) . "s",
+            number_format($dsmap_loop_time, 2) . "s",
+            number_format($dsmap_total_time, 2) . "s",
+            $dsmap_memory_usage
+        );
+    }
+
+    printf(
+        $format,
+        'Native',
+        number_format($native_add_time, 2) . "s",
+        number_format($native_loop_time, 2) . "s",
+        number_format($native_total_time, 2) . "s",
         $native_memory_usage
     );
 }
@@ -176,6 +241,54 @@ function test_storeArrays($amount=1048577)
     $splfixed_total_time = microtime(true) - $splfixed_total_time;
 
 
+    // Mesure Ds
+    if(class_exists("\\Ds\\Vector"))
+    {
+        // Vector
+        $dsvector_total_time = microtime(true);
+        $list = new \Ds\Vector();
+
+        // adding items
+        $dsvector_add_time = microtime(true);
+        for($i=0; $i<=$amount; $i++)
+        {
+            $list->push(["name" => "hello world" . $i]);
+        }
+        $dsvector_add_time = microtime(true) - $dsvector_add_time;
+
+        // loop all data
+        $dsvector_loop_time = microtime(true);
+        foreach($list as $value){}
+        $dsvector_loop_time = microtime(true) - $dsvector_loop_time;
+
+        $dsvector_memory_usage = ceil(memory_get_usage(false) / 1024 / 1024) . "MB";
+
+        $dsvector_total_time = microtime(true) - $dsvector_total_time;
+
+
+        // Map
+        $dsmap_total_time = microtime(true);
+        $list = new \Ds\Map();
+
+        // adding items
+        $dsmap_add_time = microtime(true);
+        for($i=0; $i<=$amount; $i++)
+        {
+            $list->put($i, ["name" => "hello world" . $i]);
+        }
+        $dsmap_add_time = microtime(true) - $dsmap_add_time;
+
+        // loop all data
+        $dsmap_loop_time = microtime(true);
+        foreach($list as $value){}
+        $dsmap_loop_time = microtime(true) - $dsmap_loop_time;
+
+        $dsmap_memory_usage = ceil(memory_get_usage(false) / 1024 / 1024) . "MB";
+
+        $dsmap_total_time = microtime(true) - $dsmap_total_time;
+    }
+
+
     // Mesure native
     $native_total_time = microtime(true);
     $list = [];
@@ -197,45 +310,62 @@ function test_storeArrays($amount=1048577)
 
     $native_total_time = microtime(true) - $native_total_time;
 
-    $format = "%15.15s | %-15.15s | %-15.15s | %-15.15s\n";
-    
+    $format = "%15.15s | %10.10s | %8.8s | %10.10s | %13.13s\n";
+
     printf(
-        $format, 
-        'Measure', 
-        'DynamicArray',
-        'SplFixedArray',  
-        "Native"
-    );
-    
-    printf(
-        $format, 
-        'add '.$amount, 
-        number_format($dynamic_add_time, 2) . "s", 
-        number_format($splfixed_add_time, 2) . "s", 
-        number_format($native_add_time, 2) . "s"
-    );
-    
-    printf(
-        $format, 
-        'loop all', 
-        number_format($dynamic_loop_time, 2) . "s", 
-        number_format($splfixed_loop_time, 2) . "s",
-        number_format($native_loop_time, 2) . "s"
-    );
-    
-    printf(
-        $format, 
-        'total time', 
-        number_format($dynamic_total_time, 2) . "s",
-        number_format($splfixed_total_time, 2) . "s",  
-        number_format($native_total_time, 2) . "s"
+        $format,
+        'Structures',
+        'add '.$amount,
+        'loop all',
+        'total time',
+        'memory usage',
     );
 
     printf(
-        $format, 
-        'memory usage', 
-        $dynamic_memory_usage,
-        $splfixed_memory_usage,
+        $format,
+        'DynamicArray',
+        number_format($dynamic_add_time, 2) . "s",
+        number_format($dynamic_loop_time, 2) . "s",
+        number_format($dynamic_total_time, 2) . "s",
+        $dynamic_memory_usage
+    );
+
+    printf(
+        $format,
+        'SplFixedArray',
+        number_format($splfixed_add_time, 2) . "s",
+        number_format($splfixed_loop_time, 2) . "s",
+        number_format($splfixed_total_time, 2) . "s",
+        $splfixed_memory_usage
+    );
+
+    if(class_exists("\\Ds\\Vector"))
+    {
+        printf(
+            $format,
+            'Ds\Vector',
+            number_format($dsvector_add_time, 2) . "s",
+            number_format($dsvector_loop_time, 2) . "s",
+            number_format($dsvector_total_time, 2) . "s",
+            $dsvector_memory_usage
+        );
+
+        printf(
+            $format,
+            'Ds\Map',
+            number_format($dsmap_add_time, 2) . "s",
+            number_format($dsmap_loop_time, 2) . "s",
+            number_format($dsmap_total_time, 2) . "s",
+            $dsmap_memory_usage
+        );
+    }
+
+    printf(
+        $format,
+        'Native',
+        number_format($native_add_time, 2) . "s",
+        number_format($native_loop_time, 2) . "s",
+        number_format($native_total_time, 2) . "s",
         $native_memory_usage
     );
 }

@@ -148,6 +148,13 @@ cd lessram
 ./vendor/bin/phpunit
 ```
 
+## PHP C Extension (WIP)
+
+I started implementing the same algorithm used on the PHP implementation
+of the data structures, lots of stuff needs to be done but the base work
+should be in place. Check the [ext](https://github.com/jgmdev/lessram/tree/master/ext) directory.
+
+
 ## TODO
 
 Add associative data structures also known as maps where the index could

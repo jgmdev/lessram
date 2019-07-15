@@ -6,6 +6,7 @@ composer.lock
 ext/include/
 ext/src/.libs/
 ext/src/*.lo
+ext/src/test
 ext/classes/.libs/
 ext/classes/*.lo
 ext/.libs/

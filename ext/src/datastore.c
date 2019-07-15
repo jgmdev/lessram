@@ -9,9 +9,18 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "php.h"
-
 #include "datastore.h"
+
+#ifdef USE_C_MALLOC
+    #define dsmalloc(a) malloc(a)
+    #define dsrealloc(p, s) realloc(p, s)
+    #define dsfree(p) free(p)
+#else
+    #include "php.h"
+    #define dsmalloc(a) emalloc(a)
+    #define dsrealloc(p, s) erealloc(p, s)
+    #define dsfree(p) efree(p)
+#endif
 
 static const int DATASTORE_BUFFER = 1024 * 5; // 5 Kilobytes of buffer
 
@@ -24,9 +33,9 @@ DataString* data_string_new(
     const char* string, size_t len, size_t buffer
 )
 {
-    DataString* data = emalloc(sizeof(DataString));
+    DataString* data = dsmalloc(sizeof(DataString));
 
-    data->string = emalloc(len + buffer);
+    data->string = dsmalloc(len + buffer);
 
     if(len > 0)
     {
@@ -43,8 +52,8 @@ void data_string_free(DataString* data)
 {
     if(data)
     {
-        efree(data->string);
-        efree(data);
+        dsfree(data->string);
+        dsfree(data);
     }
 }
 
@@ -62,7 +71,7 @@ size_t data_string_count(
 
     if(positions != NULL)
     {
-        *positions = emalloc(sizeof(size_t));
+        *positions = dsmalloc(sizeof(size_t));
     }
 
     for(hi=0; hi<h_len; hi++)
@@ -91,7 +100,7 @@ size_t data_string_count(
 
             if(positions != NULL)
             {
-                *positions = erealloc(*positions, sizeof(size_t) * count);
+                *positions = dsrealloc(*positions, sizeof(size_t) * count);
                 (*positions)[count-1] = hi + 1;
             }
         }
@@ -99,7 +108,7 @@ size_t data_string_count(
 
     if(positions != NULL)
     {
-        *positions = erealloc(*positions, sizeof(size_t) * (count+1));
+        *positions = dsrealloc(*positions, sizeof(size_t) * (count+1));
         (*positions)[count] = 0;
     }
 
@@ -130,7 +139,7 @@ void data_string_replace(
             if(target->len + target->buffer < new_len)
             {
                 // Allocate the required space
-                target->string = erealloc(
+                target->string = dsrealloc(
                     target->string,
                     new_len
                 );
@@ -206,14 +215,14 @@ void data_string_replace(
         }
     }
 
-    efree(positions);
+    dsfree(positions);
 }
 
 void data_string_append(DataString* string, const char value, size_t buffer)
 {
     if(string->buffer < 1)
     {
-        string->string = erealloc(string->string, 1 + buffer);
+        string->string = dsrealloc(string->string, 1 + buffer);
         string->buffer = buffer;
     }
 
@@ -234,7 +243,7 @@ void data_string_append_string(
 
     if(len > string->buffer)
     {
-        string->string = erealloc(
+        string->string = dsrealloc(
             string->string, string->len + len + buffer
         );
 
@@ -259,7 +268,7 @@ void data_string_prepend(
 {
     if(string->buffer < 1)
     {
-        string->string = erealloc(string->string, 1 + buffer);
+        string->string = dsrealloc(string->string, 1 + buffer);
         string->buffer = buffer;
     }
 
@@ -286,7 +295,7 @@ void data_string_prepend_string(
 
     if(len > string->buffer)
     {
-        string->string = erealloc(
+        string->string = dsrealloc(
             string->string, string->len + len + buffer
         );
 
@@ -322,7 +331,7 @@ void data_string_print(DataString* data)
 // DataStorage Methods -------------------------------------------------
 DataStorage* data_storage_new()
 {
-    DataStorage* storage = (DataStorage*) emalloc(sizeof(DataStorage));
+    DataStorage* storage = (DataStorage*) dsmalloc(sizeof(DataStorage));
 
     storage->elements = data_string_new("", 0, DATASTORE_BUFFER);
     storage->list_size = 0;
@@ -335,7 +344,7 @@ DataStorage* data_storage_new()
 void data_storage_free(DataStorage* storage)
 {
     data_string_free(storage->elements);
-    efree(storage);
+    dsfree(storage);
 }
 
 void data_storage_append(DataStorage* storage, DataString* value)
@@ -344,7 +353,7 @@ void data_storage_append(DataStorage* storage, DataString* value)
 
     if(value->len+1 > storage->elements->buffer)
     {
-        storage->elements->string = erealloc(
+        storage->elements->string = dsrealloc(
             storage->elements->string,
             storage->elements->len + value->len+1 + DATASTORE_BUFFER
         );
@@ -380,7 +389,7 @@ void data_storage_prepend(DataStorage* storage, DataString* value)
 
     if(value->len+1 > storage->elements->buffer)
     {
-        storage->elements->string = erealloc(
+        storage->elements->string = dsrealloc(
             storage->elements->string,
             storage->elements->len + value->len+1 + DATASTORE_BUFFER
         );

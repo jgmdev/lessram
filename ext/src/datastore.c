@@ -24,8 +24,8 @@
 
 static const int DATASTORE_BUFFER = 1024 * 5; // 5 Kilobytes of buffer
 
-DataString SEPARATOR = {"~", 1, 0};
-DataString SEPARATOR_REPLACE = {"\\~", 2, 0};
+static DataString SEPARATOR = {"~", 1, 0};
+static DataString SEPARATOR_REPLACE = {"\\~", 2, 0};
 
 // DataString Methods --------------------------------------------------
 

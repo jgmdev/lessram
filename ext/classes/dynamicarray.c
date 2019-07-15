@@ -15,8 +15,8 @@
 
 #include <classes/dynamicarray.h>
 
-DataString SEP_CHAR = {"~", 1, 0};
-DataString SEPR_CHAR = {"\\~", 2, 0};
+static DataString SEP_CHAR = {"~", 1, 0};
+static DataString SEPR_CHAR = {"\\~", 2, 0};
 
 zend_object_handlers php_lessram_dynamic_handlers;
 

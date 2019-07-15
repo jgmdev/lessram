@@ -39,21 +39,23 @@ using the same algorithm on C.
 =======================================================================
 String store test with native C extension:
 =======================================================================
-        Measure | DynamicArray    | SplFixedArray   | Native         
-    add 1048577 | 0.24s           | 0.10s           | 0.15s          
-       loop all | 0.15s           | 0.03s           | 0.02s          
-     total time | 0.39s           | 0.14s           | 0.18s          
-   memory usage | 19MB            | 65MB            | 113MB          
+     Structures | add 104857 | loop all | total time |  memory usage
+   DynamicArray |      0.24s |    0.15s |      0.39s |          19MB
+  SplFixedArray |      0.10s |    0.03s |      0.14s |          65MB
+      Ds\Vector |      0.15s |    0.02s |      0.19s |          72MB
+         Ds\Map |      0.27s |    0.03s |      0.32s |         121MB
+         Native |      0.15s |    0.02s |      0.20s |         113MB
 
 
 =======================================================================
-Array store test with native C extension:
+Array store test with natice C extension:
 =======================================================================
-        Measure | DynamicArray    | SplFixedArray   | Native         
-    add 1048577 | 0.53s           | 0.34s           | 0.24s          
-       loop all | 0.54s           | 0.23s           | 0.13s          
-     total time | 1.07s           | 0.58s           | 0.44s          
-   memory usage | 32MB            | 441MB           | 489MB
+     Structures | add 104857 | loop all | total time |  memory usage
+   DynamicArray |      0.54s |    0.56s |      1.10s |          32MB
+  SplFixedArray |      0.34s |    0.23s |      0.58s |         441MB
+      Ds\Vector |      0.23s |    0.25s |      0.56s |         448MB
+         Ds\Map |      0.34s |    0.24s |      0.66s |         497MB
+         Native |      0.26s |    0.14s |      0.48s |         489MB
 ```
 
 As you can see the difference in performance is not that huge now :)

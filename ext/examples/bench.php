@@ -14,7 +14,7 @@ test_storeArrays();
 
 echo "\n";
 
-function test_storeStrings($amount=1048577)
+function test_storeStrings($amount=1024*1024)
 {
     // Measure DynamicArray
     $dynamic_total_time = microtime(true);
@@ -22,7 +22,7 @@ function test_storeStrings($amount=1048577)
 
     // adding items
     $dynamic_add_time = microtime(true);
-    for($i=0; $i<=$amount; $i++)
+    for($i=0; $i<$amount; $i++)
     {
         $list->appendData("hello world" . $i);
     }
@@ -30,7 +30,7 @@ function test_storeStrings($amount=1048577)
 
     // loop all data
     $dynamic_loop_time = microtime(true);
-    for($i=0; $i<=$amount; $i++)
+    for($i=0; $i<$amount; $i++)
     {
         $list->next();
     }
@@ -47,7 +47,7 @@ function test_storeStrings($amount=1048577)
 
     // adding items
     $splfixed_add_time = microtime(true);
-    for($i=0; $i<=$amount; $i++)
+    for($i=0; $i<$amount; $i++)
     {
         $list[$i] = "hello world" . $i;
     }
@@ -72,7 +72,7 @@ function test_storeStrings($amount=1048577)
 
         // adding items
         $dsvector_add_time = microtime(true);
-        for($i=0; $i<=$amount; $i++)
+        for($i=0; $i<$amount; $i++)
         {
             $list->push("hello world" . $i);
         }
@@ -94,7 +94,7 @@ function test_storeStrings($amount=1048577)
 
         // adding items
         $dsmap_add_time = microtime(true);
-        for($i=0; $i<=$amount; $i++)
+        for($i=0; $i<$amount; $i++)
         {
             $list->put($i, "hello world" . $i);
         }
@@ -117,7 +117,7 @@ function test_storeStrings($amount=1048577)
 
     // adding items
     $native_add_time = microtime(true);
-    for($i=0; $i<=$amount; $i++)
+    for($i=0; $i<$amount; $i++)
     {
         $list[] = "hello world" . $i;
     }
@@ -192,7 +192,7 @@ function test_storeStrings($amount=1048577)
     );
 }
 
-function test_storeArrays($amount=1048577)
+function test_storeArrays($amount=1024*1024)
 {
     // Mesure DynamicArray
     $dynamic_total_time = microtime(true);
@@ -200,7 +200,7 @@ function test_storeArrays($amount=1048577)
 
     // adding items
     $dynamic_add_time = microtime(true);
-    for($i=0; $i<=$amount; $i++)
+    for($i=0; $i<$amount; $i++)
     {
         $list->appendData(["name" => "hello world" . $i]);
     }
@@ -208,7 +208,7 @@ function test_storeArrays($amount=1048577)
 
     // loop all data
     $dynamic_loop_time = microtime(true);
-    for($i=0; $i<=$amount; $i++)
+    for($i=0; $i<$amount; $i++)
     {
         $list->next();
     }
@@ -225,7 +225,7 @@ function test_storeArrays($amount=1048577)
 
     // adding items
     $splfixed_add_time = microtime(true);
-    for($i=0; $i<=$amount; $i++)
+    for($i=0; $i<$amount; $i++)
     {
         $list[$i] = ["name" => "hello world" . $i];
     }
@@ -250,7 +250,7 @@ function test_storeArrays($amount=1048577)
 
         // adding items
         $dsvector_add_time = microtime(true);
-        for($i=0; $i<=$amount; $i++)
+        for($i=0; $i<$amount; $i++)
         {
             $list->push(["name" => "hello world" . $i]);
         }
@@ -272,7 +272,7 @@ function test_storeArrays($amount=1048577)
 
         // adding items
         $dsmap_add_time = microtime(true);
-        for($i=0; $i<=$amount; $i++)
+        for($i=0; $i<$amount; $i++)
         {
             $list->put($i, ["name" => "hello world" . $i]);
         }
@@ -295,7 +295,7 @@ function test_storeArrays($amount=1048577)
 
     // adding items
     $native_add_time = microtime(true);
-    for($i=0; $i<=$amount; $i++)
+    for($i=0; $i<$amount; $i++)
     {
         $list[] = ["name" => "hello world" . $i];
     }

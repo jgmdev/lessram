@@ -39,23 +39,23 @@ using the same algorithm on C.
 =======================================================================
 String store test with native C extension:
 =======================================================================
-     Structures |  add 1048577 | loop all | total time |  memory usage
-   DynamicArray |        0.25s |    0.15s |      0.40s |          19MB
-  SplFixedArray |        0.10s |    0.03s |      0.14s |          65MB
-      Ds\Vector |        0.15s |    0.02s |      0.19s |          72MB
-         Ds\Map |        0.28s |    0.03s |      0.33s |         121MB
-         Native |        0.15s |    0.02s |      0.21s |         113MB
+     Structures |  add 1048576 | loop all | total time |  memory usage
+   DynamicArray |        0.24s |    0.15s |      0.38s |          19MB
+  SplFixedArray |        0.11s |    0.03s |      0.14s |          65MB
+      Ds\Vector |        0.14s |    0.02s |      0.19s |          72MB
+         Ds\Map |        0.21s |    0.03s |      0.26s |          85MB
+         Native |        0.12s |    0.02s |      0.17s |          81MB
 
 
 =======================================================================
 Array store test with natice C extension:
 =======================================================================
-     Structures |  add 1048577 | loop all | total time |  memory usage
-   DynamicArray |        0.56s |    0.56s |      1.12s |          32MB
-  SplFixedArray |        0.34s |    0.25s |      0.60s |         441MB
-      Ds\Vector |        0.24s |    0.27s |      0.58s |         448MB
-         Ds\Map |        0.39s |    0.25s |      0.72s |         497MB
-         Native |        0.28s |    0.17s |      0.54s |         489MB
+     Structures |  add 1048576 | loop all | total time |  memory usage
+   DynamicArray |        0.52s |    0.58s |      1.10s |          32MB
+  SplFixedArray |        0.33s |    0.24s |      0.59s |         441MB
+      Ds\Vector |        0.23s |    0.26s |      0.57s |         448MB
+         Ds\Map |        0.31s |    0.24s |      0.64s |         461MB
+         Native |        0.22s |    0.15s |      0.45s |         457MB
 ```
 
 As you can see the difference in performance is not that huge now :)

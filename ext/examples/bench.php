@@ -132,7 +132,7 @@ function test_storeStrings($amount=1048577)
 
     $native_total_time = microtime(true) - $native_total_time;
 
-    $format = "%15.15s | %10.10s | %8.8s | %10.10s | %13.13s\n";
+    $format = "%15.15s | %12.12s | %8.8s | %10.10s | %13.13s\n";
 
     printf(
         $format,
@@ -310,7 +310,7 @@ function test_storeArrays($amount=1048577)
 
     $native_total_time = microtime(true) - $native_total_time;
 
-    $format = "%15.15s | %10.10s | %8.8s | %10.10s | %13.13s\n";
+    $format = "%15.15s | %12.12s | %8.8s | %10.10s | %13.13s\n";
 
     printf(
         $format,

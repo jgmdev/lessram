@@ -47,7 +47,7 @@ String store test with native C extension:
 
 
 =======================================================================
-Array store test with natice C extension:
+Array store test with native C extension:
 =======================================================================
         Measure | DynamicArray    | SplFixedArray   | Native         
     add 1048577 | 0.53s           | 0.34s           | 0.24s          

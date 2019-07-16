@@ -152,7 +152,8 @@ cd lessram
 
 I started implementing the same algorithm used on the PHP implementation
 of the data structures, lots of stuff needs to be done but the base work
-should be in place. Check the [ext](https://github.com/jgmdev/lessram/tree/master/ext) directory.
+should be in place. Check the [ext](https://github.com/jgmdev/lessram/tree/master/ext) 
+directory for more information and benchmarks.
 
 
 ## TODO

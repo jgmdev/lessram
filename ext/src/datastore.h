@@ -8,9 +8,19 @@
 #define DATA_STORE_NATIVE_H
 
 #include <stddef.h>
+#include <stdbool.h>
 
 #define DS_PARAM(s) s, sizeof(s)-1
 
+
+typedef struct _DataIndex {
+    size_t* start;
+    size_t* end;
+    size_t count;
+    size_t buffer;
+    size_t buffer_left;
+    size_t buffer_next;
+} DataIndex;
 
 typedef struct _DataString {
     char* string;
@@ -23,7 +33,27 @@ typedef struct _DataStorage {
     size_t list_size;
     size_t current_item;
     size_t current_position;
+    DataIndex* index;
 } DataStorage;
+
+
+DataIndex* data_index_new(size_t buffer);
+
+bool data_index_add(DataIndex* index, size_t start, size_t end);
+
+bool data_index_edit(
+    DataIndex* index, size_t position, size_t start, size_t end
+);
+
+bool data_index_delete(DataIndex* index, size_t position);
+
+bool data_index_get(
+    const DataIndex* index, size_t position, size_t* start, size_t* end
+);
+
+void data_index_clear(DataIndex* index);
+
+void data_index_free(DataIndex* index);
 
 
 

@@ -8,7 +8,7 @@ test_storeStrings();
 echo "\n\n";
 
 echo "=======================================================================\n";
-echo "Array store test with natice C extension:\n";
+echo "Array store test with native C extension:\n";
 echo "=======================================================================\n";
 test_storeArrays();
 
@@ -184,7 +184,7 @@ function test_storeStrings($amount=1024*1024)
 
     printf(
         $format,
-        'Native',
+        'Native Array',
         number_format($native_add_time, 2) . "s",
         number_format($native_loop_time, 2) . "s",
         number_format($native_total_time, 2) . "s",
@@ -362,7 +362,7 @@ function test_storeArrays($amount=1024*1024)
 
     printf(
         $format,
-        'Native',
+        'Native Array',
         number_format($native_add_time, 2) . "s",
         number_format($native_loop_time, 2) . "s",
         number_format($native_total_time, 2) . "s",

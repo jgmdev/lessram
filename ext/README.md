@@ -48,7 +48,7 @@ String store test with native C extension:
 
 
 =======================================================================
-Array store test with natice C extension:
+Array store test with native C extension:
 =======================================================================
      Structures |  add 1048576 | loop all | total time |  memory usage
    DynamicArray |        0.52s |    0.58s |      1.10s |          32MB

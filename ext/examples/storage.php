@@ -1,6 +1,8 @@
 <?php
 
-$data = new LessRam\DynamicArray(LessRam\DynamicArray::LOWEST);
+use Lessram\Storage;
+
+$data = new Storage(Storage::LOWEST);
 
 for($i=0; $i<10; $i++)
 {

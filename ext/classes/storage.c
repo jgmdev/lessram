@@ -13,7 +13,7 @@
 #include "php/ext/json/php_json.h"
 #include "php/Zend/zend_smart_str.h"
 
-#include <classes/dynamicarray.h>
+#include <classes/storage.h>
 
 static DataString SEP_CHAR = {"~", 1, 0};
 static DataString SEPR_CHAR = {"\\~", 2, 0};
@@ -24,37 +24,37 @@ static enum savings {
     HIGHEST = 2
 };
 
-zend_object_handlers php_lessram_dynamic_handlers;
+zend_object_handlers php_lessram_storage_handlers;
 
-zend_class_entry* lessramDynamic_ce;
+zend_class_entry* lessramStorage_ce;
 
-zend_object* php_lessram_dynamic_create(zend_class_entry* ce) {
-    php_lessram_dynamic_t* w = (php_lessram_dynamic_t*)
+zend_object* php_lessram_storage_create(zend_class_entry* ce) {
+    php_lessram_storage_t* s = (php_lessram_storage_t*)
         ecalloc(
             1,
-            sizeof(php_lessram_dynamic_t) + zend_object_properties_size(ce)
+            sizeof(php_lessram_storage_t) + zend_object_properties_size(ce)
         )
     ;
 
-    zend_object_std_init(&w->std, ce);
+    zend_object_std_init(&s->std, ce);
 
-    object_properties_init(&w->std, ce);
+    object_properties_init(&s->std, ce);
 
-    w->std.handlers = &php_lessram_dynamic_handlers;
+    s->std.handlers = &php_lessram_storage_handlers;
 
-    return &w->std;
+    return &s->std;
 }
 
-ZEND_BEGIN_ARG_INFO_EX(php_lessram_dynamic_construct_info, 0, 0, 0)
+ZEND_BEGIN_ARG_INFO_EX(php_lessram_storage_construct_info, 0, 0, 0)
     ZEND_ARG_TYPE_INFO(0, savings, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
-/* {{{ proto DynamicArray DynamicArray::__construct(savings=DynamicArray::LOWEST) */
-PHP_METHOD(DynamicArray, __construct)
+/* {{{ proto Storage Storage::__construct(savings=Storage::LOWEST) */
+PHP_METHOD(Storage, __construct)
 {
-    php_lessram_dynamic_t* d = php_lessram_dynamic_fetch(getThis());
+    php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
 
-    d->this = getThis();
+    s->this = getThis();
 
     zend_long savings = 0;
 
@@ -75,36 +75,36 @@ PHP_METHOD(DynamicArray, __construct)
     switch(savings)
     {
         case HIGHEST:
-            d->storage = data_storage_new();
+            s->storage = data_storage_new();
             break;
         case MODERATE: 
-            d->storage = data_storage_new_with_index();
+            s->storage = data_storage_new_with_index();
             break;
         default:
-            d->storage = data_storage_new_with_index_and_list();
+            s->storage = data_storage_new_with_index_and_list();
     }
     
 } /* }}} */
 
-ZEND_BEGIN_ARG_INFO_EX(php_lessram_dynamic_destruct_info, 0, 0, 0)
+ZEND_BEGIN_ARG_INFO_EX(php_lessram_storage_destruct_info, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
-/* {{{ proto void DynamicArray::__destruct() */
-PHP_METHOD(DynamicArray, __destruct)
+/* {{{ proto void Storage::__destruct() */
+PHP_METHOD(Storage, __destruct)
 {
-    php_lessram_dynamic_t* d = php_lessram_dynamic_fetch(getThis());
+    php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
 
-    data_storage_free(d->storage);
+    data_storage_free(s->storage);
 } /* }}} */
 
-ZEND_BEGIN_ARG_INFO_EX(php_lessram_dynamic_append_info, 0, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(php_lessram_storage_append_info, 0, 0, 1)
     ZEND_ARG_INFO(0, data)
 ZEND_END_ARG_INFO()
 
-/* {{{ proto void DynamicArray::append(mixed data) */
-PHP_METHOD(DynamicArray, append)
+/* {{{ proto void Storage::append(mixed data) */
+PHP_METHOD(Storage, append)
 {
-    php_lessram_dynamic_t* d = php_lessram_dynamic_fetch(getThis());
+    php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
     zval* data = NULL;
     zend_string* data_str = NULL;
 
@@ -132,7 +132,7 @@ PHP_METHOD(DynamicArray, append)
         memcpy(ds->string, ZSTR_VAL(data_str), ZSTR_LEN(data_str));
         data_string_prepend_string(ds, "\0:", 2, 0);
 
-        data_storage_append(d->storage, ds);
+        data_storage_append(s->storage, ds);
 
         smart_str_free(&result);
         zend_string_efree(data_str);
@@ -146,20 +146,20 @@ PHP_METHOD(DynamicArray, append)
         DataString* ds = data_string_new("", ZSTR_LEN(data_str), 20);
         memcpy(ds->string, ZSTR_VAL(data_str), ZSTR_LEN(data_str));
 
-        data_storage_append(d->storage, ds);
+        data_storage_append(s->storage, ds);
 
         data_string_free(ds);
     }
 } /* }}} */
 
-ZEND_BEGIN_ARG_INFO_EX(php_lessram_dynamic_append_data_info, 0, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(php_lessram_storage_append_data_info, 0, 0, 1)
     ZEND_ARG_TYPE_INFO(0, data, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 
-/* {{{ proto void DynamicArray::appendData(string data) */
-PHP_METHOD(DynamicArray, appendData)
+/* {{{ proto void Storage::appendData(string data) */
+PHP_METHOD(Storage, appendData)
 {
-    php_lessram_dynamic_t* d = php_lessram_dynamic_fetch(getThis());
+    php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
     zend_string* data = NULL;
 
     if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "S", &data) != SUCCESS) {
@@ -171,19 +171,19 @@ PHP_METHOD(DynamicArray, appendData)
     DataString* ds = data_string_new("", ZSTR_LEN(data), 20);
     memcpy(ds->string, ZSTR_VAL(data), ZSTR_LEN(data));
 
-    data_storage_append(d->storage, ds);
+    data_storage_append(s->storage, ds);
 
     data_string_free(ds);
 } /* }}} */
 
-ZEND_BEGIN_ARG_INFO_EX(php_lessram_dynamic_prepend_info, 0, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(php_lessram_storage_prepend_info, 0, 0, 1)
     ZEND_ARG_INFO(0, data)
 ZEND_END_ARG_INFO()
 
-/* {{{ proto void DynamicArray::prepend(mixed data) */
-PHP_METHOD(DynamicArray, prepend)
+/* {{{ proto void Storage::prepend(mixed data) */
+PHP_METHOD(Storage, prepend)
 {
-    php_lessram_dynamic_t* d = php_lessram_dynamic_fetch(getThis());
+    php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
     zval* data = NULL;
     zend_string* data_str = NULL;
 
@@ -211,7 +211,7 @@ PHP_METHOD(DynamicArray, prepend)
         memcpy(ds->string, ZSTR_VAL(data_str), ZSTR_LEN(data_str));
         data_string_prepend_string(ds, "\0:", 2, 0);
 
-        data_storage_prepend(d->storage, ds);
+        data_storage_prepend(s->storage, ds);
 
         smart_str_free(&result);
         zend_string_efree(data_str);
@@ -225,19 +225,19 @@ PHP_METHOD(DynamicArray, prepend)
         DataString* ds = data_string_new("", ZSTR_LEN(data_str), 20);
         memcpy(ds->string, ZSTR_VAL(data_str), ZSTR_LEN(data_str));
 
-        data_storage_prepend(d->storage, ds);
+        data_storage_prepend(s->storage, ds);
 
         data_string_free(ds);
     }
 } /* }}} */
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(php_lessram_dynamic_next_info, 0, 0, IS_STRING|IS_ARRAY, 0)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(php_lessram_storage_next_info, 0, 0, IS_STRING|IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
-/* {{{ proto mixed DynamicArray::next(void) */
-PHP_METHOD(DynamicArray, next)
+/* {{{ proto mixed Storage::next(void) */
+PHP_METHOD(Storage, next)
 {
-    php_lessram_dynamic_t* d = php_lessram_dynamic_fetch(getThis());
+    php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
 
     if (
         zend_parse_parameters_none() != SUCCESS
@@ -245,12 +245,12 @@ PHP_METHOD(DynamicArray, next)
         return;
     }
 
-    DataString string = data_storage_get_next(d->storage);
+    DataString string = data_storage_get_next(s->storage);
     DataString* string_replace = NULL;
 
     if(string.string[0] == '\0' && string.string[1] == ':')
     {
-        if(!d->storage->index && !d->storage->list)
+        if(!s->storage->index && !s->storage->list)
         {
             string_replace = data_string_new(
                 string.string+2, 
@@ -281,7 +281,7 @@ PHP_METHOD(DynamicArray, next)
     }
     else
     {
-        if(!d->storage->index && !d->storage->list)
+        if(!s->storage->index && !s->storage->list)
         {
             string_replace = data_string_new(
                 string.string+2, 
@@ -304,50 +304,50 @@ PHP_METHOD(DynamicArray, next)
 } /* }}} */
 
 /* {{{ */
-const zend_function_entry php_lessram_dynamic_methods[] = {
-    PHP_ME(DynamicArray, __construct,   php_lessram_dynamic_construct_info,     ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
-    PHP_ME(DynamicArray, __destruct,    php_lessram_dynamic_destruct_info,      ZEND_ACC_DTOR|ZEND_ACC_PUBLIC)
-    PHP_ME(DynamicArray, append,        php_lessram_dynamic_append_info,        ZEND_ACC_PUBLIC)
-    PHP_ME(DynamicArray, appendData,    php_lessram_dynamic_append_data_info,   ZEND_ACC_PUBLIC)
-    PHP_ME(DynamicArray, prepend,       php_lessram_dynamic_prepend_info,       ZEND_ACC_PUBLIC)
-    PHP_ME(DynamicArray, next,          php_lessram_dynamic_next_info,          ZEND_ACC_PUBLIC)
+const zend_function_entry php_lessram_storage_methods[] = {
+    PHP_ME(Storage, __construct,   php_lessram_storage_construct_info,     ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
+    PHP_ME(Storage, __destruct,    php_lessram_storage_destruct_info,      ZEND_ACC_DTOR|ZEND_ACC_PUBLIC)
+    PHP_ME(Storage, append,        php_lessram_storage_append_info,        ZEND_ACC_PUBLIC)
+    PHP_ME(Storage, appendData,    php_lessram_storage_append_data_info,   ZEND_ACC_PUBLIC)
+    PHP_ME(Storage, prepend,       php_lessram_storage_prepend_info,       ZEND_ACC_PUBLIC)
+    PHP_ME(Storage, next,          php_lessram_storage_next_info,          ZEND_ACC_PUBLIC)
     PHP_FE_END
 }; /* }}} */
 
 /* {{{ */
-PHP_MINIT_FUNCTION(LessRam_DynamicArray)
+PHP_MINIT_FUNCTION(LessRam_Storage)
 {
     zend_class_entry ce;
 
     INIT_NS_CLASS_ENTRY(
         ce,
         "LessRam",
-        "DynamicArray",
-        php_lessram_dynamic_methods
+        "Storage",
+        php_lessram_storage_methods
     );
 
-    lessramDynamic_ce = zend_register_internal_class(&ce);
-    lessramDynamic_ce->create_object = php_lessram_dynamic_create;
+    lessramStorage_ce = zend_register_internal_class(&ce);
+    lessramStorage_ce->create_object = php_lessram_storage_create;
 
     memcpy(
-        &php_lessram_dynamic_handlers,
+        &php_lessram_storage_handlers,
         zend_get_std_object_handlers(),
         sizeof(zend_object_handlers)
     );
 
-    php_lessram_dynamic_handlers.offset = XtOffsetOf(
-        php_lessram_dynamic_t,
+    php_lessram_storage_handlers.offset = XtOffsetOf(
+        php_lessram_storage_t,
         std
     );
 
     zend_declare_class_constant_long(
-        lessramDynamic_ce, "LOWEST", 6, LOWEST
+        lessramStorage_ce, "LOWEST", 6, LOWEST
     );
     zend_declare_class_constant_long(
-        lessramDynamic_ce, "MODERATE", 8, MODERATE
+        lessramStorage_ce, "MODERATE", 8, MODERATE
     );
     zend_declare_class_constant_long(
-        lessramDynamic_ce, "HIGHEST", 7, HIGHEST
+        lessramStorage_ce, "HIGHEST", 7, HIGHEST
     );
 
     return SUCCESS;

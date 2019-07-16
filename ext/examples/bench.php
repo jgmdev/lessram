@@ -18,7 +18,7 @@ function test_storeStrings($amount=1024*1024)
 {
     // Measure Highest
     $dynamic_total_time = microtime(true);
-    $list = new LessRam\DynamicArray(LessRam\DynamicArray::HIGHEST);
+    $list = new LessRam\Storage(LessRam\Storage::HIGHEST);
 
     // adding items
     $dynamic_add_time = microtime(true);
@@ -43,7 +43,7 @@ function test_storeStrings($amount=1024*1024)
 
     // Measure Moderate
     $dynamic_m_total_time = microtime(true);
-    $list = new LessRam\DynamicArray(LessRam\DynamicArray::MODERATE);
+    $list = new LessRam\Storage(LessRam\Storage::MODERATE);
 
     // adding items
     $dynamic_m_add_time = microtime(true);
@@ -68,7 +68,7 @@ function test_storeStrings($amount=1024*1024)
 
     // Measure Lowest
     $dynamic_l_total_time = microtime(true);
-    $list = new LessRam\DynamicArray(LessRam\DynamicArray::LOWEST);
+    $list = new LessRam\Storage(LessRam\Storage::LOWEST);
 
     // adding items
     $dynamic_l_add_time = microtime(true);
@@ -294,7 +294,7 @@ function test_storeArrays($amount=1024*1024)
 {
     // Mesure Highest
     $dynamic_total_time = microtime(true);
-    $list = new LessRam\DynamicArray(LessRam\DynamicArray::HIGHEST);
+    $list = new LessRam\Storage(LessRam\Storage::HIGHEST);
 
     // adding items
     $dynamic_add_time = microtime(true);
@@ -319,7 +319,7 @@ function test_storeArrays($amount=1024*1024)
 
     // Measure Moderate
     $dynamic_m_total_time = microtime(true);
-    $list = new LessRam\DynamicArray(LessRam\DynamicArray::MODERATE);
+    $list = new LessRam\Storage(LessRam\Storage::MODERATE);
 
     // adding items
     $dynamic_m_add_time = microtime(true);
@@ -344,7 +344,7 @@ function test_storeArrays($amount=1024*1024)
 
     // Measure Lowest
     $dynamic_l_total_time = microtime(true);
-    $list = new LessRam\DynamicArray(LessRam\DynamicArray::LOWEST);
+    $list = new LessRam\Storage(LessRam\Storage::LOWEST);
 
     // adding items
     $dynamic_l_add_time = microtime(true);

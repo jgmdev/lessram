@@ -17,7 +17,7 @@ Now the library supports 3 modes of operation:
 ### Example
 
 ```php
-$view = new LessRam\DynamicArray(LessRam\DynamicArray::LOWEST);
+$view = new LessRam\Storage(LessRam\Storage::LOWEST);
 $view->append("Hello world!");
 echo $view->next();
 ```
@@ -79,4 +79,3 @@ As you can see the difference in performance is not that huge now :)
 * Implement additional data storage container to store objects and resources.
 * Implement Countable, Iterable, etc. interfaces
 * Add support for associative indexes.
-* Give a better name to the class: LessRam\Storage?

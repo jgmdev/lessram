@@ -15,13 +15,13 @@
 #include "ext/standard/info.h"
 #include "php_lessram.h"
 
-#include <classes/dynamicarray.h>
+#include <classes/storage.h>
 
 /* {{{ PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(lessram)
 {
-    PHP_MINIT(LessRam_DynamicArray)(INIT_FUNC_ARGS_PASSTHRU);
+    PHP_MINIT(LessRam_Storage)(INIT_FUNC_ARGS_PASSTHRU);
 
     return SUCCESS;
 }

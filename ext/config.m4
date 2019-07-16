@@ -12,6 +12,6 @@ if test "$PHP_LESSRAM" != "no"; then
     lessram,
     lessram.c \
       src/datastore.c \
-      classes/dynamicarray.c,
+      classes/storage.c,
     $ext_shared,,-DZEND_ENABLE_STATIC_TSRMLS_CACHE=1)
 fi

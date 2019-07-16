@@ -112,6 +112,27 @@ function test_storeStrings($amount=1024*1024)
 
     $splfixed_total_time = microtime(true) - $splfixed_total_time;
 
+    // Mesure SplDoublyLinkedList
+    $spldllist_total_time = microtime(true);
+    $list = new SplDoublyLinkedList($amount+1);
+
+    // adding items
+    $spldllist_add_time = microtime(true);
+    for($i=0; $i<$amount; $i++)
+    {
+        $list[] = "hello world" . $i;
+    }
+    $spldllist_add_time = microtime(true) - $spldllist_add_time;
+
+    // loop all data
+    $spldllist_loop_time = microtime(true);
+    foreach($list as $value){}
+    $spldllist_loop_time = microtime(true) - $spldllist_loop_time;
+
+    $spldllist_memory_usage = ceil(memory_get_usage(false) / 1024 / 1024) . "MB";
+
+    $spldllist_total_time = microtime(true) - $spldllist_total_time;
+
 
     // Mesure Ds
     if(class_exists("\\Ds\\Vector"))
@@ -182,7 +203,7 @@ function test_storeStrings($amount=1024*1024)
 
     $native_total_time = microtime(true) - $native_total_time;
 
-    $format = "%15.15s | %12.12s | %8.8s | %10.10s | %13.13s\n";
+    $format = "%16.16s | %12.12s | %8.8s | %10.10s | %13.13s\n";
 
     printf(
         $format,
@@ -227,6 +248,15 @@ function test_storeStrings($amount=1024*1024)
         number_format($splfixed_loop_time, 2) . "s",
         number_format($splfixed_total_time, 2) . "s",
         $splfixed_memory_usage
+    );
+
+    printf(
+        $format,
+        'SplDoublyLinkedList',
+        number_format($spldllist_add_time, 2) . "s",
+        number_format($spldllist_loop_time, 2) . "s",
+        number_format($spldllist_total_time, 2) . "s",
+        $spldllist_memory_usage
     );
 
     if(class_exists("\\Ds\\Vector"))
@@ -359,6 +389,28 @@ function test_storeArrays($amount=1024*1024)
     $splfixed_total_time = microtime(true) - $splfixed_total_time;
 
 
+    // Mesure SplDoublyLinkedList
+    $spldllist_total_time = microtime(true);
+    $list = new SplDoublyLinkedList($amount+1);
+
+    // adding items
+    $spldllist_add_time = microtime(true);
+    for($i=0; $i<$amount; $i++)
+    {
+        $list[] = ["name" => "hello world" . $i];
+    }
+    $spldllist_add_time = microtime(true) - $spldllist_add_time;
+
+    // loop all data
+    $spldllist_loop_time = microtime(true);
+    foreach($list as $value){}
+    $spldllist_loop_time = microtime(true) - $spldllist_loop_time;
+
+    $spldllist_memory_usage = ceil(memory_get_usage(false) / 1024 / 1024) . "MB";
+
+    $spldllist_total_time = microtime(true) - $spldllist_total_time;
+
+
     // Mesure Ds
     if(class_exists("\\Ds\\Vector"))
     {
@@ -428,7 +480,7 @@ function test_storeArrays($amount=1024*1024)
 
     $native_total_time = microtime(true) - $native_total_time;
 
-    $format = "%15.15s | %12.12s | %8.8s | %10.10s | %13.13s\n";
+    $format = "%16.16s | %12.12s | %8.8s | %10.10s | %13.13s\n";
 
     printf(
         $format,
@@ -473,6 +525,15 @@ function test_storeArrays($amount=1024*1024)
         number_format($splfixed_loop_time, 2) . "s",
         number_format($splfixed_total_time, 2) . "s",
         $splfixed_memory_usage
+    );
+
+    printf(
+        $format,
+        'SplDoublyLinkedList',
+        number_format($spldllist_add_time, 2) . "s",
+        number_format($spldllist_loop_time, 2) . "s",
+        number_format($spldllist_total_time, 2) . "s",
+        $spldllist_memory_usage
     );
 
     if(class_exists("\\Ds\\Vector"))

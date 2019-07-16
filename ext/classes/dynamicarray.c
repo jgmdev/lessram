@@ -18,6 +18,12 @@
 static DataString SEP_CHAR = {"~", 1, 0};
 static DataString SEPR_CHAR = {"\\~", 2, 0};
 
+static enum savings {
+    LOWEST = 0,
+    MODERATE = 1,
+    HIGHEST = 2
+};
+
 zend_object_handlers php_lessram_dynamic_handlers;
 
 zend_class_entry* lessramDynamic_ce;
@@ -40,22 +46,44 @@ zend_object* php_lessram_dynamic_create(zend_class_entry* ce) {
 }
 
 ZEND_BEGIN_ARG_INFO_EX(php_lessram_dynamic_construct_info, 0, 0, 0)
+    ZEND_ARG_TYPE_INFO(0, savings, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
-/* {{{ proto DynamicArray DynamicArray::__construct() */
+/* {{{ proto DynamicArray DynamicArray::__construct(savings=DynamicArray::LOWEST) */
 PHP_METHOD(DynamicArray, __construct)
 {
     php_lessram_dynamic_t* d = php_lessram_dynamic_fetch(getThis());
 
     d->this = getThis();
 
-    if (
-        zend_parse_parameters_none() != SUCCESS
-    ) {
-        return;
+    zend_long savings = 0;
+
+    if(ZEND_NUM_ARGS() > 0)
+    {
+        if (
+            zend_parse_parameters(
+                ZEND_NUM_ARGS(), "L", &savings
+            ) 
+            != 
+            SUCCESS
+        ) 
+        {
+            savings = 0;
+        }
     }
 
-    d->storage = data_storage_new();
+    switch(savings)
+    {
+        case HIGHEST:
+            d->storage = data_storage_new();
+            break;
+        case MODERATE: 
+            d->storage = data_storage_new_with_index();
+            break;
+        default:
+            d->storage = data_storage_new_with_index_and_list();
+    }
+    
 } /* }}} */
 
 ZEND_BEGIN_ARG_INFO_EX(php_lessram_dynamic_destruct_info, 0, 0, 0)
@@ -70,35 +98,11 @@ PHP_METHOD(DynamicArray, __destruct)
 } /* }}} */
 
 ZEND_BEGIN_ARG_INFO_EX(php_lessram_dynamic_append_info, 0, 0, 1)
-    ZEND_ARG_TYPE_INFO(0, data, IS_STRING, 0)
-ZEND_END_ARG_INFO()
-
-/* {{{ proto void DynamicArray::append(string data) */
-PHP_METHOD(DynamicArray, append)
-{
-    php_lessram_dynamic_t* d = php_lessram_dynamic_fetch(getThis());
-    zend_string* data = NULL;
-
-    if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "S", &data) != SUCCESS) {
-        return;
-    }
-
-    convert_to_string(data);
-
-    DataString* ds = data_string_new("", ZSTR_LEN(data), 20);
-    memcpy(ds->string, ZSTR_VAL(data), ZSTR_LEN(data));
-
-    data_storage_append(d->storage, ds);
-
-    data_string_free(ds);
-} /* }}} */
-
-ZEND_BEGIN_ARG_INFO_EX(php_lessram_dynamic_append_data_info, 0, 0, 1)
     ZEND_ARG_INFO(0, data)
 ZEND_END_ARG_INFO()
 
-/* {{{ proto void DynamicArray::appendData(string data) */
-PHP_METHOD(DynamicArray, appendData)
+/* {{{ proto void DynamicArray::append(mixed data) */
+PHP_METHOD(DynamicArray, append)
 {
     php_lessram_dynamic_t* d = php_lessram_dynamic_fetch(getThis());
     zval* data = NULL;
@@ -148,12 +152,12 @@ PHP_METHOD(DynamicArray, appendData)
     }
 } /* }}} */
 
-ZEND_BEGIN_ARG_INFO_EX(php_lessram_dynamic_prepend_info, 0, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(php_lessram_dynamic_append_data_info, 0, 0, 1)
     ZEND_ARG_TYPE_INFO(0, data, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 
-/* {{{ proto void DynamicArray::prepend(string data) */
-PHP_METHOD(DynamicArray, prepend)
+/* {{{ proto void DynamicArray::appendData(string data) */
+PHP_METHOD(DynamicArray, appendData)
 {
     php_lessram_dynamic_t* d = php_lessram_dynamic_fetch(getThis());
     zend_string* data = NULL;
@@ -162,12 +166,69 @@ PHP_METHOD(DynamicArray, prepend)
         return;
     }
 
+    convert_to_string(data);
+
     DataString* ds = data_string_new("", ZSTR_LEN(data), 20);
     memcpy(ds->string, ZSTR_VAL(data), ZSTR_LEN(data));
 
-    data_storage_prepend(d->storage, ds);
+    data_storage_append(d->storage, ds);
 
     data_string_free(ds);
+} /* }}} */
+
+ZEND_BEGIN_ARG_INFO_EX(php_lessram_dynamic_prepend_info, 0, 0, 1)
+    ZEND_ARG_INFO(0, data)
+ZEND_END_ARG_INFO()
+
+/* {{{ proto void DynamicArray::prepend(mixed data) */
+PHP_METHOD(DynamicArray, prepend)
+{
+    php_lessram_dynamic_t* d = php_lessram_dynamic_fetch(getThis());
+    zval* data = NULL;
+    zend_string* data_str = NULL;
+
+    if(
+        zend_parse_parameters_ex(
+            ZEND_PARSE_PARAMS_QUIET, 
+            ZEND_NUM_ARGS(), 
+            "z", 
+            &data
+        ) 
+        != 
+        SUCCESS
+    )
+    {
+        return;
+    }
+
+    if(Z_TYPE_P(data) == IS_ARRAY || Z_TYPE_P(data) == IS_OBJECT)
+    {
+        smart_str result = {0};
+        php_json_encode(&result, data, 0);
+        data_str = smart_str_extract(&result);
+
+        DataString* ds = data_string_new("", ZSTR_LEN(data_str), 20);
+        memcpy(ds->string, ZSTR_VAL(data_str), ZSTR_LEN(data_str));
+        data_string_prepend_string(ds, "\0:", 2, 0);
+
+        data_storage_prepend(d->storage, ds);
+
+        smart_str_free(&result);
+        zend_string_efree(data_str);
+        data_string_free(ds);
+    }
+    else // TODO: throw exception if adding resources.
+    {
+        convert_to_string(data);
+        data_str = Z_STR_P(data);
+
+        DataString* ds = data_string_new("", ZSTR_LEN(data_str), 20);
+        memcpy(ds->string, ZSTR_VAL(data_str), ZSTR_LEN(data_str));
+
+        data_storage_prepend(d->storage, ds);
+
+        data_string_free(ds);
+    }
 } /* }}} */
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(php_lessram_dynamic_next_info, 0, 0, IS_STRING|IS_ARRAY, 0)
@@ -184,28 +245,62 @@ PHP_METHOD(DynamicArray, next)
         return;
     }
 
-    DataString* string = data_storage_next_copy(d->storage);
+    DataString string = data_storage_get_next(d->storage);
+    DataString* string_replace = NULL;
 
-    if(string->string[0] == '\0' && string->string[1] == ':')
+    if(string.string[0] == '\0' && string.string[1] == ':')
     {
-        data_string_replace(&SEPR_CHAR, &SEP_CHAR, string);
+        if(!d->storage->index && !d->storage->list)
+        {
+            string_replace = data_string_new(
+                string.string+2, 
+                string.len-2,
+                0
+            );
 
-        php_json_decode(
-            return_value, 
-            string->string+2, 
-            string->len-2, 
-            1, 
-            512
-        );
+            data_string_replace(&SEPR_CHAR, &SEP_CHAR, string_replace);
+
+            php_json_decode(
+                return_value, 
+                string_replace->string, 
+                string_replace->len, 
+                1, 
+                512
+            );
+        }
+        else
+        {
+            php_json_decode(
+                return_value, 
+                string.string+2, 
+                string.len-2, 
+                1, 
+                512
+            );
+        }
     }
     else
     {
-        data_string_replace(&SEPR_CHAR, &SEP_CHAR, string);
+        if(!d->storage->index && !d->storage->list)
+        {
+            string_replace = data_string_new(
+                string.string+2, 
+                string.len-2,
+                0
+            );
 
-        RETVAL_STRINGL(string->string, string->len);
+            data_string_replace(&SEPR_CHAR, &SEP_CHAR, string_replace);
+
+            RETVAL_STRINGL(string_replace->string, string_replace->len);
+        }
+        else
+        {
+            RETVAL_STRINGL(string.string, string.len);
+        }
     }
 
-    data_string_free(string);
+    if(string_replace)
+        data_string_free(string_replace);
 } /* }}} */
 
 /* {{{ */
@@ -243,6 +338,16 @@ PHP_MINIT_FUNCTION(LessRam_DynamicArray)
     php_lessram_dynamic_handlers.offset = XtOffsetOf(
         php_lessram_dynamic_t,
         std
+    );
+
+    zend_declare_class_constant_long(
+        lessramDynamic_ce, "LOWEST", 6, LOWEST
+    );
+    zend_declare_class_constant_long(
+        lessramDynamic_ce, "MODERATE", 8, MODERATE
+    );
+    zend_declare_class_constant_long(
+        lessramDynamic_ce, "HIGHEST", 7, HIGHEST
     );
 
     return SUCCESS;

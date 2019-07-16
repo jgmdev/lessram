@@ -16,15 +16,15 @@ echo "\n";
 
 function test_storeStrings($amount=1024*1024)
 {
-    // Measure DynamicArray
+    // Measure Highest
     $dynamic_total_time = microtime(true);
-    $list = new LessRam\DynamicArray();
+    $list = new LessRam\DynamicArray(LessRam\DynamicArray::HIGHEST);
 
     // adding items
     $dynamic_add_time = microtime(true);
     for($i=0; $i<$amount; $i++)
     {
-        $list->appendData("hello world" . $i);
+        $list->append("hello world" . $i);
     }
     $dynamic_add_time = microtime(true) - $dynamic_add_time;
 
@@ -39,6 +39,56 @@ function test_storeStrings($amount=1024*1024)
     $dynamic_memory_usage = ceil(memory_get_usage(false) / 1024 / 1024) . "MB";
 
     $dynamic_total_time = microtime(true) - $dynamic_total_time;
+
+
+    // Measure Moderate
+    $dynamic_m_total_time = microtime(true);
+    $list = new LessRam\DynamicArray(LessRam\DynamicArray::MODERATE);
+
+    // adding items
+    $dynamic_m_add_time = microtime(true);
+    for($i=0; $i<$amount; $i++)
+    {
+        $list->append("hello world" . $i);
+    }
+    $dynamic_m_add_time = microtime(true) - $dynamic_m_add_time;
+
+    // loop all data
+    $dynamic_m_loop_time = microtime(true);
+    for($i=0; $i<$amount; $i++)
+    {
+        $list->next();
+    }
+    $dynamic_m_loop_time = microtime(true) - $dynamic_m_loop_time;
+
+    $dynamic_m_memory_usage = ceil(memory_get_usage(false) / 1024 / 1024) . "MB";
+
+    $dynamic_m_total_time = microtime(true) - $dynamic_m_total_time;
+
+
+    // Measure Lowest
+    $dynamic_l_total_time = microtime(true);
+    $list = new LessRam\DynamicArray(LessRam\DynamicArray::LOWEST);
+
+    // adding items
+    $dynamic_l_add_time = microtime(true);
+    for($i=0; $i<$amount; $i++)
+    {
+        $list->append("hello world" . $i);
+    }
+    $dynamic_l_add_time = microtime(true) - $dynamic_l_add_time;
+
+    // loop all data
+    $dynamic_l_loop_time = microtime(true);
+    for($i=0; $i<$amount; $i++)
+    {
+        $list->next();
+    }
+    $dynamic_l_loop_time = microtime(true) - $dynamic_l_loop_time;
+
+    $dynamic_l_memory_usage = ceil(memory_get_usage(false) / 1024 / 1024) . "MB";
+
+    $dynamic_l_total_time = microtime(true) - $dynamic_l_total_time;
 
 
     // Mesure SplFixedArray
@@ -145,11 +195,29 @@ function test_storeStrings($amount=1024*1024)
 
     printf(
         $format,
-        'DynamicArray',
+        'LessRam Highest',
         number_format($dynamic_add_time, 2) . "s",
         number_format($dynamic_loop_time, 2) . "s",
         number_format($dynamic_total_time, 2) . "s",
         $dynamic_memory_usage
+    );
+
+    printf(
+        $format,
+        'LessRam Moderate',
+        number_format($dynamic_m_add_time, 2) . "s",
+        number_format($dynamic_m_loop_time, 2) . "s",
+        number_format($dynamic_m_total_time, 2) . "s",
+        $dynamic_m_memory_usage
+    );
+
+    printf(
+        $format,
+        'LessRam Lowest',
+        number_format($dynamic_l_add_time, 2) . "s",
+        number_format($dynamic_l_loop_time, 2) . "s",
+        number_format($dynamic_l_total_time, 2) . "s",
+        $dynamic_l_memory_usage
     );
 
     printf(
@@ -194,15 +262,15 @@ function test_storeStrings($amount=1024*1024)
 
 function test_storeArrays($amount=1024*1024)
 {
-    // Mesure DynamicArray
+    // Mesure Highest
     $dynamic_total_time = microtime(true);
-    $list = new LessRam\DynamicArray();
+    $list = new LessRam\DynamicArray(LessRam\DynamicArray::HIGHEST);
 
     // adding items
     $dynamic_add_time = microtime(true);
     for($i=0; $i<$amount; $i++)
     {
-        $list->appendData(["name" => "hello world" . $i]);
+        $list->append(["name" => "hello world" . $i]);
     }
     $dynamic_add_time = microtime(true) - $dynamic_add_time;
 
@@ -217,6 +285,56 @@ function test_storeArrays($amount=1024*1024)
     $dynamic_memory_usage = ceil(memory_get_usage(false) / 1024 / 1024) . "MB";
 
     $dynamic_total_time = microtime(true) - $dynamic_total_time;
+
+
+    // Measure Moderate
+    $dynamic_m_total_time = microtime(true);
+    $list = new LessRam\DynamicArray(LessRam\DynamicArray::MODERATE);
+
+    // adding items
+    $dynamic_m_add_time = microtime(true);
+    for($i=0; $i<$amount; $i++)
+    {
+        $list->append(["name" => "hello world" . $i]);
+    }
+    $dynamic_m_add_time = microtime(true) - $dynamic_m_add_time;
+
+    // loop all data
+    $dynamic_m_loop_time = microtime(true);
+    for($i=0; $i<$amount; $i++)
+    {
+        $list->next();
+    }
+    $dynamic_m_loop_time = microtime(true) - $dynamic_m_loop_time;
+
+    $dynamic_m_memory_usage = ceil(memory_get_usage(false) / 1024 / 1024) . "MB";
+
+    $dynamic_m_total_time = microtime(true) - $dynamic_m_total_time;
+
+
+    // Measure Lowest
+    $dynamic_l_total_time = microtime(true);
+    $list = new LessRam\DynamicArray(LessRam\DynamicArray::LOWEST);
+
+    // adding items
+    $dynamic_l_add_time = microtime(true);
+    for($i=0; $i<$amount; $i++)
+    {
+        $list->append(["name" => "hello world" . $i]);
+    }
+    $dynamic_l_add_time = microtime(true) - $dynamic_l_add_time;
+
+    // loop all data
+    $dynamic_l_loop_time = microtime(true);
+    for($i=0; $i<$amount; $i++)
+    {
+        $list->next();
+    }
+    $dynamic_l_loop_time = microtime(true) - $dynamic_l_loop_time;
+
+    $dynamic_l_memory_usage = ceil(memory_get_usage(false) / 1024 / 1024) . "MB";
+
+    $dynamic_l_total_time = microtime(true) - $dynamic_l_total_time;
 
 
     // Mesure SplFixedArray
@@ -323,11 +441,29 @@ function test_storeArrays($amount=1024*1024)
 
     printf(
         $format,
-        'DynamicArray',
+        'LessRam Highest',
         number_format($dynamic_add_time, 2) . "s",
         number_format($dynamic_loop_time, 2) . "s",
         number_format($dynamic_total_time, 2) . "s",
         $dynamic_memory_usage
+    );
+
+    printf(
+        $format,
+        'LessRam Moderate',
+        number_format($dynamic_m_add_time, 2) . "s",
+        number_format($dynamic_m_loop_time, 2) . "s",
+        number_format($dynamic_m_total_time, 2) . "s",
+        $dynamic_m_memory_usage
+    );
+
+    printf(
+        $format,
+        'LessRam Lowest',
+        number_format($dynamic_l_add_time, 2) . "s",
+        number_format($dynamic_l_loop_time, 2) . "s",
+        number_format($dynamic_l_total_time, 2) . "s",
+        $dynamic_l_memory_usage
     );
 
     printf(

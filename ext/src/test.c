@@ -14,8 +14,8 @@
 
 #include "datastore.h"
 
-const size_t append = 5;
-const size_t prepend = 5;
+const size_t append = 165;
+const size_t prepend = 0;
 
 int main(int argc, char** argv)
 {
@@ -53,11 +53,18 @@ int main(int argc, char** argv)
     data_string_print(message);
     printf("----------------------------\n");
 
+    printf("\nReplace position 7-10 with 'Jim':\n");
+    DataString name_three = {"Jim", 3, 0};
+    data_string_replace_position(message, &name_three, 7, 10);
+    printf("Result:\n");
+    data_string_print(message);
+    printf("----------------------------\n");
+
     data_string_free(message);
 
     printf("\nDataStorage tests:\n");
     printf("============================\n");
-    DataStorage* storage = data_storage_new();
+    DataStorage* storage = data_storage_new_with_index_and_list();
 
     struct timeval time_append;
     gettimeofday(&time_append, NULL);
@@ -81,7 +88,11 @@ int main(int argc, char** argv)
     double microsec_append_end = (time_append_finish.tv_sec * 1000 * 1000) + time_append_finish.tv_usec;
 
     printf("\nAfter append data looks like:\n");
-    data_string_print(storage->elements);
+    for(size_t i=0; i<append; i++)
+    {
+        DataString string = data_storage_get_next(storage);
+        data_string_print(&string);
+    }
     printf("\n----------------------------\n");
 
     struct timeval time_prepend;
@@ -103,9 +114,16 @@ int main(int argc, char** argv)
     double microsec_prepend_start = (time_prepend.tv_sec * 1000 * 1000) + time_prepend.tv_usec;
     double microsec_prepend_end = (time_prepend_finish.tv_sec * 1000 * 1000) + time_prepend_finish.tv_usec;
 
-    printf("\nAfter prepend data looks like:\n");
-    data_string_print(storage->elements);
-    printf("\n----------------------------\n");
+    if(prepend)
+    {
+        printf("\nAfter prepend data looks like:\n");
+        for(size_t i=0; i<prepend; i++)
+        {
+            DataString string = data_storage_get_next(storage);
+            data_string_print(&string);
+        }
+        printf("\n----------------------------\n");
+    }
 
     data_string_free(value);
 
@@ -115,8 +133,7 @@ int main(int argc, char** argv)
     printf("\nFinal result:\n");
     for(size_t i=0; i<(append+prepend); i++)
     {
-        DataString string = data_storage_next(storage);
-        data_string_print(&string);
+        data_storage_get_next(storage);
     }
     
     struct timeval time_loop_finish;
@@ -124,6 +141,12 @@ int main(int argc, char** argv)
 
     double microsec_start_loop = (time_loop.tv_sec * 1000 * 1000) + time_loop.tv_usec;
     double microsec_end_loop = (time_loop_finish.tv_sec * 1000 * 1000) + time_loop_finish.tv_usec;
+
+    for(size_t i=0; i<(append+prepend); i++)
+    {
+        DataString string = data_storage_get_next(storage);
+        data_string_print(&string);
+    }
 
     printf("\n----------------------------\n");
 

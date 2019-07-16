@@ -22,6 +22,14 @@ typedef struct _DataIndex {
     size_t buffer_next;
 } DataIndex;
 
+typedef struct _DataList {
+    void** items;
+    size_t count;
+    size_t buffer;
+    size_t buffer_left;
+    size_t buffer_next;
+} DataList;
+
 typedef struct _DataString {
     char* string;
     size_t len;
@@ -30,16 +38,23 @@ typedef struct _DataString {
 
 typedef struct _DataStorage {
     DataString* elements;
+
+    DataIndex* index;
+    DataList* list;
+
     size_t list_size;
     size_t current_item;
     size_t current_position;
-    DataIndex* index;
 } DataStorage;
 
 
 DataIndex* data_index_new(size_t buffer);
 
-bool data_index_add(DataIndex* index, size_t start, size_t end);
+DataIndex* data_index_new_with_end_only(size_t buffer);
+
+bool data_index_append(DataIndex* index, size_t start, size_t end);
+
+bool data_index_prepend(DataIndex* index, size_t start, size_t end);
 
 bool data_index_edit(
     DataIndex* index, size_t position, size_t start, size_t end
@@ -57,11 +72,35 @@ void data_index_free(DataIndex* index);
 
 
 
+DataList* data_list_new(size_t buffer);
+
+bool data_list_append(DataList* list, const void* data, size_t bytes);
+
+bool data_list_prepend(DataList* list, const void* data, size_t bytes);
+
+bool data_list_edit(
+    DataList* list, size_t position, const void* data, size_t bytes
+);
+
+bool data_list_delete(DataList* list, size_t position);
+
+bool data_list_get(
+    const DataList* list, size_t position, void** data
+);
+
+void data_list_clear(DataList* list);
+
+void data_list_free(DataList* list);
+
+
+
 DataString* data_string_new(
     const char* string, size_t len, size_t buffer
 );
 
 void data_string_free(DataString* data);
+
+void data_string_clear(DataString* data, size_t buffer);
 
 size_t data_string_count(
     const DataString* haystack,
@@ -73,6 +112,13 @@ void data_string_replace(
     const DataString* find,
     const DataString* replacement,
     DataString* target
+);
+
+bool data_string_replace_position(
+    DataString* target,
+    const DataString* replacement,
+    size_t start,
+    size_t end
 );
 
 void data_string_append(DataString* string, const char value, size_t buffer);
@@ -95,6 +141,10 @@ void data_string_print(DataString* data);
 
 DataStorage* data_storage_new();
 
+DataStorage* data_storage_new_with_index();
+
+DataStorage* data_storage_new_with_index_and_list();
+
 void data_storage_free(DataStorage* storage);
 
 void data_storage_append(
@@ -105,8 +155,16 @@ void data_storage_prepend(
     DataStorage* storage, DataString* value
 );
 
-DataString data_storage_next(DataStorage* storage);
+bool data_storage_edit(
+    DataStorage* storage, size_t position, DataString* value
+);
 
-DataString* data_storage_next_copy(DataStorage* storage);
+size_t data_storage_size(const DataStorage* storage);
+
+void data_storage_clear(DataStorage* storage);
+
+DataString data_storage_get_next(DataStorage* storage);
+
+DataString* data_storage_get_next_copy(DataStorage* storage);
 
 #endif

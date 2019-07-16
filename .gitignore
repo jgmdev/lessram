@@ -7,6 +7,8 @@ ext/include/
 ext/src/.libs/
 ext/src/*.lo
 ext/src/test
+ext/src/main
+ext/src/main.c
 ext/classes/.libs/
 ext/classes/*.lo
 ext/.libs/

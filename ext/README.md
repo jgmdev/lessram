@@ -18,7 +18,7 @@ Now the library supports 3 modes of operation:
 
 ```php
 $view = new LessRam\DynamicArray(LessRam\DynamicArray::LOWEST);
-$view->appendData("Hello world!");
+$view->append("Hello world!");
 echo $view->next();
 ```
 

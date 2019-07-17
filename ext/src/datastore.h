@@ -10,8 +10,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#define DS_PARAM(s) s, sizeof(s)-1
-
+#define DS_STR(s) s, sizeof(s)-1
 
 typedef struct _DataIndex {
     size_t* start;
@@ -159,6 +158,12 @@ bool data_storage_edit(
     DataStorage* storage, size_t position, DataString* value
 );
 
+DataString data_storage_get(DataStorage* storage, size_t position);
+
+bool data_storage_remove(
+    DataStorage* storage, size_t position
+);
+
 size_t data_storage_size(const DataStorage* storage);
 
 void data_storage_clear(DataStorage* storage);
@@ -166,5 +171,7 @@ void data_storage_clear(DataStorage* storage);
 DataString data_storage_get_next(DataStorage* storage);
 
 DataString* data_storage_get_next_copy(DataStorage* storage);
+
+void data_storage_rewind(DataStorage* storage);
 
 #endif

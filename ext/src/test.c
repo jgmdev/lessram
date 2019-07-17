@@ -69,7 +69,7 @@ int main(int argc, char** argv)
     struct timeval time_append;
     gettimeofday(&time_append, NULL);
 
-    DataString* value = data_string_new("", 0, 25);
+    DataString* value = data_string_new("", 0, 40);
     char buffer[25];
     for(size_t i=0; i<append; i++)
     {

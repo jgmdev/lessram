@@ -49,7 +49,7 @@ class DynamicArray implements \ArrayAccess, \Countable, \Serializable, \Iterator
         {
             $value = "\0:".json_encode($value);
         }
-        
+
         $value = str_replace("~", "\\~", $value);
 
         $this->elements = "~" . $value . $this->elements;
@@ -166,8 +166,8 @@ class DynamicArray implements \ArrayAccess, \Countable, \Serializable, \Iterator
                 do
                 {
                     if(
-                        $this->elements{$i} == "\\" 
-                        && 
+                        $this->elements{$i} == "\\"
+                        &&
                         $this->elements{$i+1} == "~"
                     )
                     {
@@ -196,8 +196,8 @@ class DynamicArray implements \ArrayAccess, \Countable, \Serializable, \Iterator
                     $i++;
 
                     if(
-                        $this->elements{$i} == "\\" 
-                        && 
+                        $this->elements{$i} == "\\"
+                        &&
                         ($i+1) <= $elements_len
                         &&
                         $this->elements{$i+1} == "~"
@@ -209,7 +209,7 @@ class DynamicArray implements \ArrayAccess, \Countable, \Serializable, \Iterator
                 while(
                     $i < $elements_len
                     &&
-                    $this->elements{$i} != "~" 
+                    $this->elements{$i} != "~"
                 );
 
                 $i--;
@@ -302,8 +302,8 @@ class DynamicArray implements \ArrayAccess, \Countable, \Serializable, \Iterator
                     if($i < $elements_len && $this->elements{$i} != "~")
                     {
                         if(
-                            $this->elements{$i} == "\\" 
-                            && 
+                            $this->elements{$i} == "\\"
+                            &&
                             $this->elements{$i+1} == "~"
                         )
                         {
@@ -421,13 +421,13 @@ class DynamicArray implements \ArrayAccess, \Countable, \Serializable, \Iterator
     public function unserialize ($serialized)
     {
         $data = unserialize($serialized);
-        
+
         $this->elements = $data["elements"];
         $this->elements_len = $data["elements_len"];
         $this->list_size = $data["list_size"];
     }
 
-    public function rewind() 
+    public function rewind()
     {
         $this->current_item = 0;
         $this->current_position = 0;
@@ -458,8 +458,8 @@ class DynamicArray implements \ArrayAccess, \Countable, \Serializable, \Iterator
                         if($this->elements{$i} != "~")
                         {
                             if(
-                                $this->elements{$i} == "\\" 
-                                && 
+                                $this->elements{$i} == "\\"
+                                &&
                                 $this->elements{$i+1} == "~"
                             )
                             {
@@ -494,17 +494,17 @@ class DynamicArray implements \ArrayAccess, \Countable, \Serializable, \Iterator
         }
     }
 
-    public function key() 
+    public function key()
     {
         return $this->current_item;
     }
 
-    public function next() 
+    public function next()
     {
         $this->current_item++;
     }
 
-    public function valid() 
+    public function valid()
     {
         return $this->offsetExists($this->current_item);
     }

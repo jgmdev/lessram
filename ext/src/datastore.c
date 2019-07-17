@@ -226,7 +226,7 @@ bool data_index_delete(
     DataIndex* index, size_t position
 )
 {
-    if(position > index->count)
+    if(position >= index->count)
         return false;
 
     if(position != index->count-1)
@@ -254,7 +254,7 @@ bool data_index_delete(
     return true;
 }
 
-inline bool data_index_get(
+bool data_index_get(
     const DataIndex* index, size_t position, size_t* start, size_t* end
 )
 {
@@ -442,7 +442,7 @@ bool data_list_edit(
 
 bool data_list_delete(DataList* list, size_t position)
 {
-    if(position > list->count)
+    if(position >= list->count)
         return false;
 
     if(position != list->count-1)
@@ -537,11 +537,14 @@ DataString* data_string_new(
 
 void data_string_free(DataString* data)
 {
+    do
+    {
     if(data)
     {
         dsfree(data->string);
         dsfree(data);
     }
+    }while(0);
 }
 
 void data_string_clear(DataString* data, size_t buffer)
@@ -811,7 +814,7 @@ void data_string_append(DataString* string, const char value, size_t buffer)
     }
 }
 
-inline void data_string_append_string(
+void data_string_append_string(
     DataString* string, const char* value, size_t len, size_t buffer
 )
 {
@@ -905,6 +908,9 @@ void data_string_prepend_string(
 
 void data_string_print(DataString* data)
 {
+    if(!data)
+        return;
+
     for(size_t i=0; i<data->len; i++)
     {
         printf("%c", data->string[i]);
@@ -1114,7 +1120,7 @@ bool data_storage_edit(
     DataStorage* storage, size_t position, DataString* value
 )
 {
-    if(position >= storage->list_size)
+    if(position >= storage->list_size || storage->list_size == 0)
         return false;
 
     if(storage->index && storage->list)
@@ -1168,7 +1174,94 @@ bool data_storage_edit(
         return true;
     }
 
-    size_t str_pos = 0;
+    //size_t str_pos = 0;
+    //DataString current_value = data_storage_get(position, str_pos);
+
+    return true;
+}
+
+DataString data_storage_get(DataStorage* storage, size_t position)
+{
+    DataString data = {"", 0, 0};
+
+    if(position >= storage->list_size)
+    {
+        return data;
+    }
+
+    if(storage->index && storage->list)
+    {
+        size_t end;
+
+        data_index_get(
+            storage->index, 
+            position, 
+            (void*) NULL, &end
+        );
+
+        data.string = storage->list->items[position];
+
+        data.len = (storage->list->items[position] + end) 
+            - storage->list->items[position] 
+            + 1
+        ;
+
+        return data;
+    }
+    else if(storage->index)
+    {
+        size_t start, end;
+
+        data_index_get(
+            storage->index, 
+            position, 
+            &start, &end
+        );
+
+        data.string = storage->elements->string+start;
+        data.len = end - start + 1;
+
+        return data;
+    }
+
+    return data;
+}
+
+bool data_storage_remove(
+    DataStorage* storage, size_t position
+)
+{
+    if(position >= storage->list_size || storage->list_size == 0)
+        return false;
+
+    if(storage->index && storage->list)
+    {
+        data_index_delete(storage->index, position);
+        data_list_delete(storage->list, position);
+
+        storage->list_size--;
+
+        return true;
+    }
+
+    if(storage->index)
+    {
+        size_t start, end, previous_len;
+
+        data_index_get(storage->index, position, &start, &end);
+
+        DataString empty = {"", 0, 0};
+
+        data_string_replace_position(storage->elements, &empty, start-1, end);
+
+        data_index_delete(storage->index, position);
+
+        storage->list_size--;
+
+        return true;
+    }
+
+    //size_t str_pos = 0;
     //DataString current_value = data_storage_get(position, str_pos);
 
     return true;
@@ -1385,4 +1478,10 @@ DataString* data_storage_get_next_copy(DataStorage* storage)
     );
 
     return value;
+}
+
+void data_storage_rewind(DataStorage* storage)
+{
+    storage->current_item = 0;
+    storage->current_position = 0;
 }

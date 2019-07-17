@@ -10,7 +10,12 @@
 #include <src/datastore.h>
 
 #include "php.h"
+#include "php/Zend/zend_interfaces.h"
+#include "php/Zend/zend_exceptions.h"
 #include "php/ext/json/php_json.h"
+#include "php/ext/standard/php_var.h"
+#include "php/ext/spl/spl_iterators.h"
+#include "php/ext/spl/spl_exceptions.h"
 #include "php/Zend/zend_smart_str.h"
 
 #include <classes/storage.h>
@@ -45,6 +50,131 @@ zend_object* php_lessram_storage_create(zend_class_entry* ce) {
     return &s->std;
 }
 
+static void php_lessram_storage_append(DataStorage* storage, zval* data)
+{
+    zend_string* data_str = NULL;
+
+    if(Z_TYPE_P(data) == IS_ARRAY || Z_TYPE_P(data) == IS_OBJECT)
+    {
+        smart_str result = {0};
+        php_json_encode(&result, data, 0);
+        data_str = smart_str_extract(&result);
+
+        DataString* ds = data_string_new(
+            ZSTR_VAL(data_str), ZSTR_LEN(data_str), 20
+        );
+        data_string_prepend_string(ds, "\0:", 2, 0);
+
+        data_storage_append(storage, ds);
+
+        smart_str_free(&result);
+        zend_string_efree(data_str);
+        data_string_free(ds);
+    }
+    else // TODO: throw exception if adding resources.
+    {
+        convert_to_string(data);
+        data_str = Z_STR_P(data);
+
+        DataString* ds = data_string_new(
+            ZSTR_VAL(data_str), ZSTR_LEN(data_str), 20
+        );
+
+        data_storage_append(storage, ds);
+
+        data_string_free(ds);
+    }
+}
+
+static void php_lessram_storage_edit(
+    DataStorage* storage, size_t position, zval* data
+)
+{
+    zend_string* data_str = NULL;
+
+    if(Z_TYPE_P(data) == IS_ARRAY || Z_TYPE_P(data) == IS_OBJECT)
+    {
+        smart_str result = {0};
+        php_json_encode(&result, data, 0);
+        data_str = smart_str_extract(&result);
+
+        DataString* ds = data_string_new(
+            ZSTR_VAL(data_str), ZSTR_LEN(data_str), 20
+        );
+        data_string_prepend_string(ds, "\0:", 2, 0);
+
+        data_storage_edit(storage, position, ds);
+
+        smart_str_free(&result);
+        zend_string_efree(data_str);
+        data_string_free(ds);
+    }
+    else // TODO: throw exception if adding resources.
+    {
+        convert_to_string(data);
+        data_str = Z_STR_P(data);
+
+        DataString* ds = data_string_new(
+            ZSTR_VAL(data_str), ZSTR_LEN(data_str), 20
+        );
+
+        data_storage_edit(storage, position, ds);
+
+        data_string_free(ds);
+    }
+}
+
+static void php_lessram_data_string_to_zval(
+    const DataStorage* storage, const DataString string, zval* value 
+)
+{
+    DataString* string_replace = NULL;
+
+    if(string.len > 2 && string.string[0] == '\0' && string.string[1] == ':')
+    {
+        string_replace = data_string_new(
+            string.string+2,
+            string.len-2,
+            0
+        );
+
+        if(!storage->index && !storage->list)
+        {
+            data_string_replace(&SEPR_CHAR, &SEP_CHAR, string_replace);
+        }
+        
+        php_json_decode(
+            value,
+            string_replace->string,
+            string_replace->len,
+            1,
+            PHP_JSON_PARSER_DEFAULT_DEPTH
+        );
+    }
+    else
+    {
+        if(!storage->index && !storage->list)
+        {
+            string_replace = data_string_new(
+                string.string,
+                string.len,
+                0
+            );
+
+            data_string_replace(&SEPR_CHAR, &SEP_CHAR, string_replace);
+
+            ZVAL_STRINGL(value, string_replace->string, string_replace->len);
+        }
+        else
+        {
+            ZVAL_STRINGL(value, string.string, string.len);
+        }
+    }
+
+    if(string_replace)
+        data_string_free(string_replace);
+}
+
 ZEND_BEGIN_ARG_INFO_EX(php_lessram_storage_construct_info, 0, 0, 0)
     ZEND_ARG_TYPE_INFO(0, savings, IS_LONG, 0)
 ZEND_END_ARG_INFO()
@@ -62,11 +192,13 @@ PHP_METHOD(Storage, __construct)
     {
         if (
             zend_parse_parameters(
-                ZEND_NUM_ARGS(), "L", &savings
-            ) 
-            != 
+                ZEND_NUM_ARGS(),
+                "L",
+                &savings
+            )
+            !=
             SUCCESS
-        ) 
+        )
         {
             savings = 0;
         }
@@ -77,13 +209,13 @@ PHP_METHOD(Storage, __construct)
         case HIGHEST:
             s->storage = data_storage_new();
             break;
-        case MODERATE: 
+        case MODERATE:
             s->storage = data_storage_new_with_index();
             break;
         default:
             s->storage = data_storage_new_with_index_and_list();
     }
-    
+
 } /* }}} */
 
 ZEND_BEGIN_ARG_INFO_EX(php_lessram_storage_destruct_info, 0, 0, 0)
@@ -106,50 +238,22 @@ PHP_METHOD(Storage, append)
 {
     php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
     zval* data = NULL;
-    zend_string* data_str = NULL;
 
     if(
         zend_parse_parameters_ex(
-            ZEND_PARSE_PARAMS_QUIET, 
-            ZEND_NUM_ARGS(), 
-            "z", 
+            ZEND_PARSE_PARAMS_QUIET,
+            ZEND_NUM_ARGS(),
+            "z",
             &data
-        ) 
-        != 
+        )
+        !=
         SUCCESS
     )
     {
         return;
     }
 
-    if(Z_TYPE_P(data) == IS_ARRAY || Z_TYPE_P(data) == IS_OBJECT)
-    {
-        smart_str result = {0};
-        php_json_encode(&result, data, 0);
-        data_str = smart_str_extract(&result);
-
-        DataString* ds = data_string_new("", ZSTR_LEN(data_str), 20);
-        memcpy(ds->string, ZSTR_VAL(data_str), ZSTR_LEN(data_str));
-        data_string_prepend_string(ds, "\0:", 2, 0);
-
-        data_storage_append(s->storage, ds);
-
-        smart_str_free(&result);
-        zend_string_efree(data_str);
-        data_string_free(ds);
-    }
-    else // TODO: throw exception if adding resources.
-    {
-        convert_to_string(data);
-        data_str = Z_STR_P(data);
-
-        DataString* ds = data_string_new("", ZSTR_LEN(data_str), 20);
-        memcpy(ds->string, ZSTR_VAL(data_str), ZSTR_LEN(data_str));
-
-        data_storage_append(s->storage, ds);
-
-        data_string_free(ds);
-    }
+    php_lessram_storage_append(s->storage, data);
 } /* }}} */
 
 ZEND_BEGIN_ARG_INFO_EX(php_lessram_storage_append_data_info, 0, 0, 1)
@@ -162,14 +266,20 @@ PHP_METHOD(Storage, appendData)
     php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
     zend_string* data = NULL;
 
-    if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "S", &data) != SUCCESS) {
+    if (
+        zend_parse_parameters_throw(
+            ZEND_NUM_ARGS(),
+            "S",
+            &data
+        )
+        != SUCCESS
+    ) {
         return;
     }
 
     convert_to_string(data);
 
-    DataString* ds = data_string_new("", ZSTR_LEN(data), 20);
-    memcpy(ds->string, ZSTR_VAL(data), ZSTR_LEN(data));
+    DataString* ds = data_string_new(ZSTR_VAL(data), ZSTR_LEN(data), 20);
 
     data_storage_append(s->storage, ds);
 
@@ -189,12 +299,12 @@ PHP_METHOD(Storage, prepend)
 
     if(
         zend_parse_parameters_ex(
-            ZEND_PARSE_PARAMS_QUIET, 
-            ZEND_NUM_ARGS(), 
-            "z", 
+            ZEND_PARSE_PARAMS_QUIET,
+            ZEND_NUM_ARGS(),
+            "z",
             &data
-        ) 
-        != 
+        )
+        !=
         SUCCESS
     )
     {
@@ -207,8 +317,9 @@ PHP_METHOD(Storage, prepend)
         php_json_encode(&result, data, 0);
         data_str = smart_str_extract(&result);
 
-        DataString* ds = data_string_new("", ZSTR_LEN(data_str), 20);
-        memcpy(ds->string, ZSTR_VAL(data_str), ZSTR_LEN(data_str));
+        DataString* ds = data_string_new(
+            ZSTR_VAL(data_str), ZSTR_LEN(data_str), 20
+        );
         data_string_prepend_string(ds, "\0:", 2, 0);
 
         data_storage_prepend(s->storage, ds);
@@ -222,8 +333,9 @@ PHP_METHOD(Storage, prepend)
         convert_to_string(data);
         data_str = Z_STR_P(data);
 
-        DataString* ds = data_string_new("", ZSTR_LEN(data_str), 20);
-        memcpy(ds->string, ZSTR_VAL(data_str), ZSTR_LEN(data_str));
+        DataString* ds = data_string_new(
+            ZSTR_VAL(data_str), ZSTR_LEN(data_str), 20
+        );
 
         data_storage_prepend(s->storage, ds);
 
@@ -231,86 +343,404 @@ PHP_METHOD(Storage, prepend)
     }
 } /* }}} */
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(php_lessram_storage_next_info, 0, 0, IS_STRING|IS_ARRAY, 0)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(php_lessram_storage_get_next_info, 0, 0, IS_STRING|IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
 /* {{{ proto mixed Storage::next(void) */
-PHP_METHOD(Storage, next)
+PHP_METHOD(Storage, getNext)
 {
     php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
 
     if (
         zend_parse_parameters_none() != SUCCESS
     ) {
+        zend_throw_exception(
+            spl_ce_InvalidArgumentException,
+            "No parameters required.",
+            0
+        );
+
         return;
     }
 
-    DataString string = data_storage_get_next(s->storage);
-    DataString* string_replace = NULL;
+    php_lessram_data_string_to_zval(
+        s->storage, 
+        data_storage_get_next(s->storage),
+        return_value
+    );
+} /* }}} */
 
-    if(string.string[0] == '\0' && string.string[1] == ':')
-    {
-        if(!s->storage->index && !s->storage->list)
-        {
-            string_replace = data_string_new(
-                string.string+2, 
-                string.len-2,
-                0
-            );
+ZEND_BEGIN_ARG_INFO_EX(php_lessram_storage_clear_info, 0, 0, 0)
+ZEND_END_ARG_INFO()
 
-            data_string_replace(&SEPR_CHAR, &SEP_CHAR, string_replace);
+/* {{{ proto void Storage::clear(void) */
+PHP_METHOD(Storage, clear)
+{
+    php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
 
-            php_json_decode(
-                return_value, 
-                string_replace->string, 
-                string_replace->len, 
-                1, 
-                512
-            );
-        }
-        else
-        {
-            php_json_decode(
-                return_value, 
-                string.string+2, 
-                string.len-2, 
-                1, 
-                512
-            );
-        }
-    }
-    else
-    {
-        if(!s->storage->index && !s->storage->list)
-        {
-            string_replace = data_string_new(
-                string.string+2, 
-                string.len-2,
-                0
-            );
+    if (
+        zend_parse_parameters_none() != SUCCESS
+    ) {
+        zend_throw_exception(
+            spl_ce_InvalidArgumentException,
+            "No parameters required.",
+            0
+        );
 
-            data_string_replace(&SEPR_CHAR, &SEP_CHAR, string_replace);
-
-            RETVAL_STRINGL(string_replace->string, string_replace->len);
-        }
-        else
-        {
-            RETVAL_STRINGL(string.string, string.len);
-        }
+        return;
     }
 
-    if(string_replace)
-        data_string_free(string_replace);
+    data_storage_clear(s->storage);
+} /* }}} */
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(php_lessram_storage_count_info, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+
+/* {{{ proto int Storage::count(void) */
+PHP_METHOD(Storage, count)
+{
+    php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
+
+    if (
+        zend_parse_parameters_none() != SUCCESS
+    ) {
+        zend_throw_exception(
+            spl_ce_InvalidArgumentException,
+            "No parameters required.",
+            0
+        );
+
+        return;
+    }
+
+    RETURN_LONG(data_storage_size(s->storage))
+} /* }}} */
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(php_lessram_storage_offset_exists_info, 0, 0, _IS_BOOL, 0)
+    ZEND_ARG_INFO(0, offset)
+ZEND_END_ARG_INFO()
+
+/* {{{ proto bool Storage::offsetExists(mixed offset) */
+PHP_METHOD(Storage, offsetExists)
+{
+    php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
+
+    zval* offset = NULL;
+
+    if(
+        zend_parse_parameters_ex(
+            ZEND_PARSE_PARAMS_QUIET,
+            ZEND_NUM_ARGS(),
+            "z",
+            &offset
+        )
+        !=
+        SUCCESS
+    )
+    {
+        RETURN_BOOL(0)
+    }
+
+    if(Z_TYPE_P(offset) == IS_LONG)
+    {
+        zend_long offset_val = Z_LVAL_P(offset);
+        zend_long size = data_storage_size(s->storage);
+
+        if(size != 0)
+        {
+            RETURN_BOOL(
+                offset_val >= 0
+                &&
+                offset_val < size
+            )
+        }
+    }
+
+    RETURN_BOOL(0)
+} /* }}} */
+
+ZEND_BEGIN_ARG_INFO_EX(php_lessram_storage_offset_get_info, 0, 0, 1)
+    ZEND_ARG_INFO(0, offset)
+ZEND_END_ARG_INFO()
+
+/* {{{ proto mixed Storage::offsetGet(mixed offset) */
+PHP_METHOD(Storage, offsetGet)
+{
+    php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
+
+    zval* offset = NULL;
+
+    if(
+        zend_parse_parameters_ex(
+            ZEND_PARSE_PARAMS_QUIET,
+            ZEND_NUM_ARGS(),
+            "z",
+            &offset
+        )
+        !=
+        SUCCESS
+    )
+    {
+        RETURN_BOOL(0)
+    }
+
+    if(Z_TYPE_P(offset) == IS_LONG)
+    {
+        zend_long offset_val = Z_LVAL_P(offset);
+
+        if(s->storage->list_size != 0 && offset_val < s->storage->list_size)
+        {
+            php_lessram_data_string_to_zval(
+                s->storage, 
+                data_storage_get(s->storage, offset_val),
+                return_value
+            );
+
+            return;
+        }
+    }
+
+    RETURN_NULL()
+} /* }}} */
+
+ZEND_BEGIN_ARG_INFO_EX(php_lessram_storage_offset_set_info, 0, 0, 2)
+    ZEND_ARG_INFO(0, offset)
+    ZEND_ARG_INFO(0, value)
+ZEND_END_ARG_INFO()
+
+/* {{{ proto void Storage::offsetSet(mixed offset, mixed value) */
+PHP_METHOD(Storage, offsetSet)
+{
+    php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
+
+    zval* offset = NULL;
+    zval* value = NULL;
+
+    if(
+        zend_parse_parameters_throw(
+            ZEND_NUM_ARGS(),
+            "zz",
+            &offset,
+            &value
+        )
+        !=
+        SUCCESS
+    )
+    {
+        return;
+    }
+
+    if(Z_TYPE_P(offset) == IS_NULL)
+    {
+        php_lessram_storage_append(s->storage, value);
+    }
+    else if(Z_TYPE_P(offset) == IS_LONG)
+    {
+        zend_long offset_val = Z_LVAL_P(offset);
+
+        php_lessram_storage_edit(s->storage, offset_val, value);
+    }
+} /* }}} */
+
+ZEND_BEGIN_ARG_INFO_EX(php_lessram_storage_offset_unset_info, 0, 0, 1)
+    ZEND_ARG_INFO(0, offset)
+ZEND_END_ARG_INFO()
+
+/* {{{ proto void Storage::offsetUnset(mixed offset) */
+PHP_METHOD(Storage, offsetUnset)
+{
+    php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
+
+    zval* offset = NULL;
+
+    if(
+        zend_parse_parameters_throw(
+            ZEND_NUM_ARGS(),
+            "z",
+            &offset
+        )
+        !=
+        SUCCESS
+    )
+    {
+        return;
+    }
+
+    if(Z_TYPE_P(offset) == IS_LONG)
+    {
+        zend_long offset_val = Z_LVAL_P(offset);
+
+        data_storage_remove(s->storage, offset_val);
+    }
+} /* }}} */
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(php_lessram_storage_key_info, 0, 0, IS_LONG|IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
+/* {{{ proto ing|string Storage::key(void) */
+PHP_METHOD(Storage, key)
+{
+    php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
+
+    if (
+        zend_parse_parameters_none() != SUCCESS
+    ) {
+        zend_throw_exception(
+            spl_ce_InvalidArgumentException,
+            "No parameters required.",
+            0
+        );
+
+        return;
+    }
+
+    RETURN_LONG(s->storage->current_item);
+} /* }}} */
+
+ZEND_BEGIN_ARG_INFO_EX(php_lessram_storage_next_info, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
+/* {{{ proto void Storage::next(void) */
+PHP_METHOD(Storage, next){} 
+/* }}} */
+
+ZEND_BEGIN_ARG_INFO_EX(php_lessram_storage_rewind_info, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
+/* {{{ proto void Storage::rewind(void) */
+PHP_METHOD(Storage, rewind)
+{
+    php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
+
+    if (
+        zend_parse_parameters_none() != SUCCESS
+    ) {
+        zend_throw_exception(
+            spl_ce_InvalidArgumentException,
+            "No parameters required.",
+            0
+        );
+
+        return;
+    }
+
+    data_storage_rewind(s->storage);
+} /* }}} */
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(php_lessram_storage_valid_info, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+
+/* {{{ proto bool Storage::valid(void) */
+PHP_METHOD(Storage, valid)
+{
+    php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
+
+    if (
+        zend_parse_parameters_none() != SUCCESS
+    ) {
+        zend_throw_exception(
+            spl_ce_InvalidArgumentException,
+            "No parameters required.",
+            0
+        );
+
+        return;
+    }
+
+    RETURN_BOOL(s->storage->list_size > s->storage->current_item);
 } /* }}} */
 
 /* {{{ */
 const zend_function_entry php_lessram_storage_methods[] = {
-    PHP_ME(Storage, __construct,   php_lessram_storage_construct_info,     ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
-    PHP_ME(Storage, __destruct,    php_lessram_storage_destruct_info,      ZEND_ACC_DTOR|ZEND_ACC_PUBLIC)
-    PHP_ME(Storage, append,        php_lessram_storage_append_info,        ZEND_ACC_PUBLIC)
-    PHP_ME(Storage, appendData,    php_lessram_storage_append_data_info,   ZEND_ACC_PUBLIC)
-    PHP_ME(Storage, prepend,       php_lessram_storage_prepend_info,       ZEND_ACC_PUBLIC)
-    PHP_ME(Storage, next,          php_lessram_storage_next_info,          ZEND_ACC_PUBLIC)
+    PHP_ME(
+        Storage, __construct,   
+        php_lessram_storage_construct_info,     
+        ZEND_ACC_CTOR|ZEND_ACC_PUBLIC
+    )
+    PHP_ME(
+        Storage, __destruct,    
+        php_lessram_storage_destruct_info,      
+        ZEND_ACC_DTOR|ZEND_ACC_PUBLIC
+    )
+    /* Core Methods */
+    PHP_ME(
+        Storage, append,        
+        php_lessram_storage_append_info,        
+        ZEND_ACC_PUBLIC
+    )
+    PHP_ME(
+        Storage, appendData,    
+        php_lessram_storage_append_data_info,   
+        ZEND_ACC_PUBLIC
+    )
+    PHP_ME(
+        Storage, prepend,       
+        php_lessram_storage_prepend_info,       
+        ZEND_ACC_PUBLIC
+    )
+    PHP_ME(
+        Storage, getNext,       
+        php_lessram_storage_get_next_info,      
+        ZEND_ACC_PUBLIC
+    )
+    PHP_ME(
+        Storage, clear,         
+        php_lessram_storage_clear_info,         
+        ZEND_ACC_PUBLIC
+    )
+    /* Countable Methods */
+    PHP_ME(
+        Storage, count,         
+        php_lessram_storage_count_info,         
+        ZEND_ACC_PUBLIC
+    )
+    /* ArrayAccess Methods */
+    PHP_ME(
+        Storage, offsetExists,         
+        php_lessram_storage_offset_exists_info,         
+        ZEND_ACC_PUBLIC
+    )
+    PHP_ME(
+        Storage, offsetGet,         
+        php_lessram_storage_offset_get_info,         
+        ZEND_ACC_PUBLIC
+    )
+    PHP_ME(
+        Storage, offsetSet,         
+        php_lessram_storage_offset_set_info,         
+        ZEND_ACC_PUBLIC
+    )
+    PHP_ME(
+        Storage, offsetUnset,         
+        php_lessram_storage_offset_unset_info,         
+        ZEND_ACC_PUBLIC
+    )
+    /* Iterator Methods */
+    PHP_MALIAS(
+        Storage, current, getNext, 
+        php_lessram_storage_get_next_info,      
+        ZEND_ACC_PUBLIC
+    )
+    PHP_ME(
+        Storage, key,           
+        php_lessram_storage_key_info,           
+        ZEND_ACC_PUBLIC
+    )
+    PHP_ME(
+        Storage, next,          
+        php_lessram_storage_next_info,          
+        ZEND_ACC_PUBLIC
+    )
+    PHP_ME(
+        Storage, rewind,        
+        php_lessram_storage_rewind_info,        
+        ZEND_ACC_PUBLIC
+    )
+    PHP_ME(
+        Storage, valid,         
+        php_lessram_storage_valid_info,         
+        ZEND_ACC_PUBLIC
+    )
     PHP_FE_END
 }; /* }}} */
 
@@ -340,14 +770,21 @@ PHP_MINIT_FUNCTION(LessRam_Storage)
         std
     );
 
+    zend_class_implements(lessramStorage_ce, 3,
+        spl_ce_ArrayAccess,
+        spl_ce_Countable,
+        spl_ce_Iterator
+        //spl_ce_Serializable
+    );
+
     zend_declare_class_constant_long(
-        lessramStorage_ce, "LOWEST", 6, LOWEST
+        lessramStorage_ce, ZEND_STRL("LOWEST"), LOWEST
     );
     zend_declare_class_constant_long(
-        lessramStorage_ce, "MODERATE", 8, MODERATE
+        lessramStorage_ce, ZEND_STRL("MODERATE"), MODERATE
     );
     zend_declare_class_constant_long(
-        lessramStorage_ce, "HIGHEST", 7, HIGHEST
+        lessramStorage_ce, ZEND_STRL("HIGHEST"), HIGHEST
     );
 
     return SUCCESS;

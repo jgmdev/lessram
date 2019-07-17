@@ -32,7 +32,7 @@ function test_storeStrings($amount=1024*1024)
     $dynamic_loop_time = microtime(true);
     for($i=0; $i<$amount; $i++)
     {
-        $list->next();
+        $list->getNext();
     }
     $dynamic_loop_time = microtime(true) - $dynamic_loop_time;
 
@@ -57,7 +57,7 @@ function test_storeStrings($amount=1024*1024)
     $dynamic_m_loop_time = microtime(true);
     for($i=0; $i<$amount; $i++)
     {
-        $list->next();
+        $list->getNext();
     }
     $dynamic_m_loop_time = microtime(true) - $dynamic_m_loop_time;
 
@@ -82,7 +82,7 @@ function test_storeStrings($amount=1024*1024)
     $dynamic_l_loop_time = microtime(true);
     for($i=0; $i<$amount; $i++)
     {
-        $list->next();
+        $list->getNext();
     }
     $dynamic_l_loop_time = microtime(true) - $dynamic_l_loop_time;
 
@@ -308,7 +308,7 @@ function test_storeArrays($amount=1024*1024)
     $dynamic_loop_time = microtime(true);
     for($i=0; $i<$amount; $i++)
     {
-        $list->next();
+        $list->getNext();
     }
     $dynamic_loop_time = microtime(true) - $dynamic_loop_time;
 
@@ -333,7 +333,7 @@ function test_storeArrays($amount=1024*1024)
     $dynamic_m_loop_time = microtime(true);
     for($i=0; $i<$amount; $i++)
     {
-        $list->next();
+        $list->getNext();
     }
     $dynamic_m_loop_time = microtime(true) - $dynamic_m_loop_time;
 
@@ -358,7 +358,7 @@ function test_storeArrays($amount=1024*1024)
     $dynamic_l_loop_time = microtime(true);
     for($i=0; $i<$amount; $i++)
     {
-        $list->next();
+        $list->getNext();
     }
     $dynamic_l_loop_time = microtime(true) - $dynamic_l_loop_time;
 

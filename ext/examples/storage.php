@@ -11,7 +11,7 @@ for($i=0; $i<10; $i++)
 
 for($i=0; $i<10; $i++)
 {
-    echo $data->next();
+    echo $data->getNext();
 }
 
 for($i=0; $i<10; $i++)
@@ -21,7 +21,7 @@ for($i=0; $i<10; $i++)
 
 for($i=0; $i<10; $i++)
 {
-    print_r($data->next());
+    print_r($data->getNext());
 }
 
 for($i=0; $i<10; $i++)
@@ -31,5 +31,17 @@ for($i=0; $i<10; $i++)
 
 for($i=0; $i<10; $i++)
 {
-    print $data->next();
+    print $data->getNext();
+}
+
+for($i=0; $i<10; $i++)
+{
+    $data->prepend(["~Hello ~ #" . $i]);
+}
+
+$data->rewind();
+
+for($i=0; $i<10; $i++)
+{
+    print_r($data->getNext());
 }

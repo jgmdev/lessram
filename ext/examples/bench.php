@@ -584,7 +584,7 @@ function test_storeIntegers($amount=1024*1024, $real=false)
     $dynamic_add_time = microtime(true);
     for($i=0; $i<$amount; $i++)
     {
-        $list->append($i);
+        $list->appendData($i);
     }
     $dynamic_add_time = microtime(true) - $dynamic_add_time;
 
@@ -609,7 +609,7 @@ function test_storeIntegers($amount=1024*1024, $real=false)
     $dynamic_m_add_time = microtime(true);
     for($i=0; $i<$amount; $i++)
     {
-        $list->append($i);
+        $list->appendData($i);
     }
     $dynamic_m_add_time = microtime(true) - $dynamic_m_add_time;
 
@@ -634,7 +634,7 @@ function test_storeIntegers($amount=1024*1024, $real=false)
     $dynamic_l_add_time = microtime(true);
     for($i=0; $i<$amount; $i++)
     {
-        $list->append($i);
+        $list->appendData($i);
     }
     $dynamic_l_add_time = microtime(true) - $dynamic_l_add_time;
 

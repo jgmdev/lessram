@@ -90,13 +90,13 @@ bool data_index_append(DataIndex* index, size_t start, size_t end)
             if(index->start)
             {
                 index->start = dsrealloc(
-                    index->start, 
+                    index->start,
                     sizeof(size_t) * (index->count + index->buffer)
                 );
             }
 
             index->end = dsrealloc(
-                index->end, 
+                index->end,
                 sizeof(size_t) * (index->count + index->buffer)
             );
 
@@ -107,13 +107,13 @@ bool data_index_append(DataIndex* index, size_t start, size_t end)
             if(index->start)
             {
                 index->start = dsrealloc(
-                    index->start, 
+                    index->start,
                     sizeof(size_t) * (index->count + 1)
                 );
             }
 
             index->end = dsrealloc(
-                index->end, 
+                index->end,
                 sizeof(size_t) * (index->count + 1)
             );
 
@@ -126,7 +126,7 @@ bool data_index_append(DataIndex* index, size_t start, size_t end)
 
     if(index->start)
         index->start[index->buffer_next] = start;
-    
+
     index->end[index->buffer_next] = end;
 
     index->count++;
@@ -145,13 +145,13 @@ bool data_index_prepend(DataIndex* index, size_t start, size_t end)
             if(index->start)
             {
                 index->start = dsrealloc(
-                    index->start, 
+                    index->start,
                     sizeof(size_t) * (index->count + index->buffer)
                 );
             }
 
             index->end = dsrealloc(
-                index->end, 
+                index->end,
                 sizeof(size_t) * (index->count + index->buffer)
             );
 
@@ -162,13 +162,13 @@ bool data_index_prepend(DataIndex* index, size_t start, size_t end)
             if(index->start)
             {
                 index->start = dsrealloc(
-                    index->start, 
+                    index->start,
                     sizeof(size_t) * (index->count + 1)
                 );
             }
 
             index->end = dsrealloc(
-                index->end, 
+                index->end,
                 sizeof(size_t) * (index->count + 1)
             );
 
@@ -182,8 +182,8 @@ bool data_index_prepend(DataIndex* index, size_t start, size_t end)
     if(index->start)
     {
         memmove(
-            &(index->start[1]), 
-            &(index->start[0]), 
+            &(index->start[1]),
+            &(index->start[0]),
             sizeof(size_t) * index->count
         );
 
@@ -191,11 +191,11 @@ bool data_index_prepend(DataIndex* index, size_t start, size_t end)
     }
 
     memmove(
-        &(index->end[1]), 
-        &(index->end[0]), 
+        &(index->end[1]),
+        &(index->end[0]),
         sizeof(size_t) * index->count
     );
-    
+
     index->end[0] = end;
 
     index->count++;
@@ -216,9 +216,9 @@ bool data_index_edit(
     {
         index->start[position] = start;
     }
-    
+
     index->end[position] = end;
-    
+
     return true;
 }
 
@@ -234,14 +234,14 @@ bool data_index_delete(
         if(index->start)
         {
             memmove(
-                &(index->start[position]), 
+                &(index->start[position]),
                 &(index->start[position+1]),
                 sizeof(size_t) * (index->count - position + 1)
             );
         }
 
         memmove(
-            &(index->end[position]), 
+            &(index->end[position]),
             &(index->end[position+1]),
             sizeof(size_t) * (index->count - position + 1)
         );
@@ -288,7 +288,7 @@ void data_index_clear(DataIndex* index)
         {
             index->start = dsmalloc(sizeof(size_t) * index->buffer);
         }
-        
+
         index->end = dsmalloc(sizeof(size_t) * index->buffer);
         index->buffer_left = index->buffer;
     }
@@ -298,7 +298,7 @@ void data_index_clear(DataIndex* index)
         {
             index->start = dsmalloc(sizeof(size_t));
         }
-        
+
         index->end = dsmalloc(sizeof(size_t));
         index->buffer_left = 1;
     }
@@ -312,7 +312,7 @@ void data_index_free(DataIndex* index)
         {
             dsfree(index->start);
         }
-        
+
         dsfree(index->end);
         dsfree(index);
     }
@@ -352,7 +352,7 @@ bool data_list_append(DataList* list, const void* data, size_t bytes)
         if(list->buffer > 0)
         {
             list->items = dsrealloc(
-                list->items, 
+                list->items,
                 sizeof(void*) * (list->count + list->buffer)
             );
 
@@ -361,7 +361,7 @@ bool data_list_append(DataList* list, const void* data, size_t bytes)
         else
         {
             list->items = dsrealloc(
-                list->items, 
+                list->items,
                 sizeof(void*) * (list->count + 1)
             );
 
@@ -389,7 +389,7 @@ bool data_list_prepend(DataList* list, const void* data, size_t bytes)
         if(list->buffer > 0)
         {
             list->items = dsrealloc(
-                list->items, 
+                list->items,
                 sizeof(void*) * (list->count + list->buffer)
             );
 
@@ -398,7 +398,7 @@ bool data_list_prepend(DataList* list, const void* data, size_t bytes)
         else
         {
             list->items = dsrealloc(
-                list->items, 
+                list->items,
                 sizeof(void*) * (list->count + 1)
             );
 
@@ -410,8 +410,8 @@ bool data_list_prepend(DataList* list, const void* data, size_t bytes)
         return false;
 
     memmove(
-        &(list->items[1]), 
-        &(list->items[0]), 
+        &(list->items[1]),
+        &(list->items[0]),
         sizeof(void*) * list->count
     );
 
@@ -436,7 +436,7 @@ bool data_list_edit(
 
     list->items[position] = dsmalloc(bytes);
     memcpy(list->items[position], data, bytes);
-    
+
     return true;
 }
 
@@ -448,7 +448,7 @@ bool data_list_delete(DataList* list, size_t position)
     if(position != list->count-1)
     {
         memmove(
-            &(list->items[position]), 
+            &(list->items[position]),
             &(list->items[position+1]),
             sizeof(void*) * (list->count - position + 1)
         );
@@ -482,7 +482,7 @@ void data_list_clear(DataList* list)
     {
         dsfree(list->items[i]);
     }
-    
+
     dsfree(list->items);
 
     list->count = 0;
@@ -733,22 +733,22 @@ bool data_string_replace_position(
     if(p_len == r_len)
     {
         memcpy(
-            &(target->string[start]), 
-            replacement->string, 
+            &(target->string[start]),
+            replacement->string,
             replacement->len
         );
     }
     else if(p_len > r_len)
     {
         memmove(
-            &(target->string[start+r_len]), 
-            &(target->string[end+1]), 
+            &(target->string[start+r_len]),
+            &(target->string[end+1]),
             t_len - end - 1
         );
 
         memcpy(
-            &(target->string[start]), 
-            replacement->string, 
+            &(target->string[start]),
+            replacement->string,
             replacement->len
         );
 
@@ -768,14 +768,14 @@ bool data_string_replace_position(
         }
 
         memmove(
-            &(target->string[start+r_len]), 
-            &(target->string[end+1]), 
+            &(target->string[start+r_len]),
+            &(target->string[end+1]),
             t_len - end - 1
         );
 
         memcpy(
-            &(target->string[start]), 
-            replacement->string, 
+            &(target->string[start]),
+            replacement->string,
             replacement->len
         );
 
@@ -917,6 +917,19 @@ void data_string_print(DataString* data)
     }
 }
 
+void data_string_println(DataString* data)
+{
+    if(!data)
+        return;
+
+    for(size_t i=0; i<data->len; i++)
+    {
+        printf("%c", data->string[i]);
+    }
+
+    printf("\n");
+}
+
 // DataStorage Methods -------------------------------------------------
 DataStorage* data_storage_new()
 {
@@ -1028,7 +1041,7 @@ void data_storage_append(DataStorage* storage, DataString* value)
     if(storage->index)
     {
         data_index_append(
-            storage->index, 
+            storage->index,
             storage->elements->len+1,
             storage->elements->len + value->len
         );
@@ -1085,7 +1098,7 @@ void data_storage_prepend(DataStorage* storage, DataString* value)
     if(storage->index)
     {
         data_index_prepend(
-            storage->index, 
+            storage->index,
             1,
             value->len
         );
@@ -1194,15 +1207,15 @@ DataString data_storage_get(DataStorage* storage, size_t position)
         size_t end;
 
         data_index_get(
-            storage->index, 
-            position, 
+            storage->index,
+            position,
             (void*) NULL, &end
         );
 
         data.string = storage->list->items[position];
 
-        data.len = (storage->list->items[position] + end) 
-            - storage->list->items[position] 
+        data.len = (storage->list->items[position] + end)
+            - storage->list->items[position]
             + 1
         ;
 
@@ -1213,8 +1226,8 @@ DataString data_storage_get(DataStorage* storage, size_t position)
         size_t start, end;
 
         data_index_get(
-            storage->index, 
-            position, 
+            storage->index,
+            position,
             &start, &end
         );
 
@@ -1297,15 +1310,15 @@ DataString data_storage_get_next(DataStorage* storage)
         size_t end;
 
         data_index_get(
-            storage->index, 
-            storage->current_item, 
+            storage->index,
+            storage->current_item,
             (void*) NULL, &end
         );
 
         data.string = (char*) storage->list->items[storage->current_item];
-        
-        data.len = (storage->list->items[storage->current_item] + end) 
-            - storage->list->items[storage->current_item] 
+
+        data.len = (storage->list->items[storage->current_item] + end)
+            - storage->list->items[storage->current_item]
             + 1
         ;
 
@@ -1318,8 +1331,8 @@ DataString data_storage_get_next(DataStorage* storage)
         size_t start, end;
 
         data_index_get(
-            storage->index, 
-            storage->current_item, 
+            storage->index,
+            storage->current_item,
             &start, &end
         );
 
@@ -1332,7 +1345,7 @@ DataString data_storage_get_next(DataStorage* storage)
     }
 
     size_t elements_len = storage->elements->len,
-        i = storage->current_position, 
+        i = storage->current_position,
         len = 0
     ;
 
@@ -1392,18 +1405,18 @@ DataString* data_storage_get_next_copy(DataStorage* storage)
         size_t end, len;
 
         data_index_get(
-            storage->index, 
-            storage->current_item, 
+            storage->index,
+            storage->current_item,
             (void*) NULL, &end
         );
-        
-        len = (storage->list->items[storage->current_item] + end) 
-            - storage->list->items[storage->current_item] 
+
+        len = (storage->list->items[storage->current_item] + end)
+            - storage->list->items[storage->current_item]
             + 1
         ;
 
         data_string_append_string(
-            value, 
+            value,
             storage->list->items[storage->current_item],
             len,
             0
@@ -1418,13 +1431,13 @@ DataString* data_storage_get_next_copy(DataStorage* storage)
         size_t start, end;
 
         data_index_get(
-            storage->index, 
-            storage->current_item, 
+            storage->index,
+            storage->current_item,
             &start, &end
         );
 
         data_string_append_string(
-            value, 
+            value,
             storage->elements->string+start,
             end - start + 1,
             0

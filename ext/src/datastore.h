@@ -136,6 +136,8 @@ void data_string_prepend_string(
 
 void data_string_print(DataString* data);
 
+void data_string_println(DataString* data);
+
 
 
 DataStorage* data_storage_new();

@@ -27,14 +27,19 @@ for($i=0; $i<10; $i++)
 }
 $time_edit_end = (microtime(true) - $time_edit);
 
+// This kind of stuff isn't supported (we don't store zvals)
+$list[4][0] .= "something";
+
 unset($list[9]);
 unset($list[8]);
-unset($list[8]);
-foreach($list as $value)
+foreach($list as $index => $value)
 {
-    var_dump($value);
+    print "$index => {$value[0]}\n";
 }
 
 echo "Add time: " . $time_add_end . "\n";
 echo "Loop time: " . $time_loop_end . "\n";
 echo "Edit time: " . $time_edit_end . "\n";
+
+// Generate exception
+print $list[20];

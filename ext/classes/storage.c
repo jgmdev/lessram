@@ -132,24 +132,34 @@ static void php_lessram_data_string_to_zval(
 
     if(string.len > 2 && string.string[0] == '\0' && string.string[1] == ':')
     {
-        string_replace = data_string_new(
-            string.string+2,
-            string.len-2,
-            0
-        );
-
         if(!storage->index && !storage->list)
         {
+            string_replace = data_string_new(
+                string.string+2,
+                string.len-2,
+                0
+            );
+
             data_string_replace(&SEPR_CHAR, &SEP_CHAR, string_replace);
+
+            php_json_decode(
+                value,
+                string_replace->string,
+                string_replace->len,
+                1,
+                PHP_JSON_PARSER_DEFAULT_DEPTH
+            );
         }
-        
-        php_json_decode(
-            value,
-            string_replace->string,
-            string_replace->len,
-            1,
-            PHP_JSON_PARSER_DEFAULT_DEPTH
-        );
+        else
+        {
+            php_json_decode(
+                value,
+                string.string+2,
+                string.len-2,
+                1,
+                PHP_JSON_PARSER_DEFAULT_DEPTH
+            );
+        }
     }
     else
     {

@@ -289,7 +289,7 @@ function test_storeStrings($amount=1024*1024, $real=false)
 
     printf(
         $format,
-        'Native Array',
+        'PHP Array',
         number_format($native_add_time, 2) . "s",
         number_format($native_loop_time, 2) . "s",
         number_format($native_total_time, 2) . "s",
@@ -489,6 +489,52 @@ function test_storeArrays($amount=1024*1024, $real=false)
 
     $format = "%16.16s | %12.12s | %8.8s | %10.10s | %13.13s\n";
 
+
+    // Mesure native storing as json
+    $native_json_total_time = microtime(true);
+    $list = [];
+
+    // adding items
+    $native_json_add_time = microtime(true);
+    for($i=0; $i<$amount; $i++)
+    {
+        $list[] = json_encode(["name" => "hello world" . $i]);
+    }
+    $native_json_add_time = microtime(true) - $native_json_add_time;
+
+    // loop all data
+    $native_json_loop_time = microtime(true);
+    foreach($list as $value){ json_decode($value); }
+    $native_json_loop_time = microtime(true) - $native_json_loop_time;
+
+    $native_json_memory_usage = ceil(memory_get_usage($real) / 1024 / 1024) . "MB";
+
+    $native_json_total_time = microtime(true) - $native_json_total_time;
+
+
+    // Mesure native storing as serialized
+    $native_serial_total_time = microtime(true);
+    $list = [];
+
+    // adding items
+    $native_serial_add_time = microtime(true);
+    for($i=0; $i<$amount; $i++)
+    {
+        $list[] = serialize(["name" => "hello world" . $i]);
+    }
+    $native_serial_add_time = microtime(true) - $native_serial_add_time;
+
+    // loop all data
+    $native_serial_loop_time = microtime(true);
+    foreach($list as $value){ unserialize($value); }
+    $native_serial_loop_time = microtime(true) - $native_serial_loop_time;
+
+    $native_serial_memory_usage = ceil(memory_get_usage($real) / 1024 / 1024) . "MB";
+
+    $native_serial_total_time = microtime(true) - $native_serial_total_time;
+
+    $format = "%16.16s | %12.12s | %8.8s | %10.10s | %13.13s\n";
+
     printf(
         $format,
         'Structures',
@@ -566,12 +612,31 @@ function test_storeArrays($amount=1024*1024, $real=false)
 
     printf(
         $format,
-        'Native Array',
+        'PHP Array     ',
         number_format($native_add_time, 2) . "s",
         number_format($native_loop_time, 2) . "s",
         number_format($native_total_time, 2) . "s",
         $native_memory_usage
     );
+
+    printf(
+        $format,
+        ' -> JSON      ',
+        number_format($native_json_add_time, 2) . "s",
+        number_format($native_json_loop_time, 2) . "s",
+        number_format($native_json_total_time, 2) . "s",
+        $native_json_memory_usage
+    );
+
+    printf(
+        $format,
+        ' -> Serialized',
+        number_format($native_serial_add_time, 2) . "s",
+        number_format($native_serial_loop_time, 2) . "s",
+        number_format($native_serial_total_time, 2) . "s",
+        $native_serial_memory_usage
+    );
+    
 }
 
 function test_storeIntegers($amount=1024*1024, $real=false)
@@ -842,7 +907,7 @@ function test_storeIntegers($amount=1024*1024, $real=false)
 
     printf(
         $format,
-        'Native Array',
+        'PHP Array',
         number_format($native_add_time, 2) . "s",
         number_format($native_loop_time, 2) . "s",
         number_format($native_total_time, 2) . "s",

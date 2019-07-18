@@ -23,11 +23,11 @@
 static DataString SEP_CHAR = {"~", 1, 0};
 static DataString SEPR_CHAR = {"\\~", 2, 0};
 
-static enum savings {
+static enum {
     LOWEST = 0,
     MODERATE = 1,
     HIGHEST = 2
-};
+} StorageSavings;
 
 zend_object_handlers php_lessram_storage_handlers;
 
@@ -50,7 +50,9 @@ zend_object* php_lessram_storage_create(zend_class_entry* ce) {
     return &s->std;
 }
 
-static zend_always_inline void php_lessram_storage_append(DataStorage* storage, zval* data)
+static zend_always_inline void php_lessram_storage_append(
+    DataStorage* storage, zval* data
+)
 {
     zend_string* data_str = NULL;
 
@@ -132,7 +134,7 @@ static zend_always_inline void php_lessram_data_string_to_zval(
 
     if(string.len > 2 && string.string[0] == '\0' && string.string[1] == ':')
     {
-        if(!storage->index && !storage->list)
+        if(!storage->list)
         {
             string_replace = data_string_new(
                 string.string+2,
@@ -142,18 +144,22 @@ static zend_always_inline void php_lessram_data_string_to_zval(
 
             data_string_replace(&SEPR_CHAR, &SEP_CHAR, string_replace);
 
+            // For some strange reason if it is not null terminated the decoder
+            // fails in some cases even when giving the exact len...
+            char string_with_null[string_replace->len+1];
+            memcpy(string_with_null, string_replace->string, string_replace->len);
+            string_with_null[string_replace->len] = '\0';
+
             php_json_decode(
                 value,
-                string_replace->string,
-                string_replace->len,
+                string_with_null,
+                strlen(string_with_null)-1,
                 1,
                 PHP_JSON_PARSER_DEFAULT_DEPTH
             );
         }
         else
         {
-            // For some strange reason if it is not null terminated the decoder
-            // fails in some cases even when giving the exact len...
             char string_with_null[string.len-2+1];
             memcpy(string_with_null, string.string+2, string.len-2);
             string_with_null[string.len-2] = '\0';
@@ -220,6 +226,8 @@ PHP_METHOD(Storage, __construct)
         default:
             s->storage = data_storage_new_with_index_and_list();
     }
+
+    s->current = 0;
 
 } /* }}} */
 
@@ -343,7 +351,7 @@ PHP_METHOD(Storage, prependData)
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(php_lessram_storage_get_next_info, 0, 0, IS_STRING|IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
-/* {{{ proto mixed Storage::next(void) */
+/* {{{ proto mixed Storage::getNext(void) */
 PHP_METHOD(Storage, getNext)
 {
     php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
@@ -544,6 +552,21 @@ PHP_METHOD(Storage, offsetUnset)
     }
 } /* }}} */
 
+ZEND_BEGIN_ARG_INFO_EX(php_lessram_storage_current_info, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
+/* {{{ proto mixed Storage::current(void) */
+PHP_METHOD(Storage, current)
+{
+    php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
+
+    php_lessram_data_string_to_zval(
+        s->storage,
+        data_storage_get_current(s->storage),
+        return_value
+    );
+} /* }}} */
+
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(php_lessram_storage_key_info, 0, 0, IS_LONG|IS_STRING, 0)
 ZEND_END_ARG_INFO()
 
@@ -552,16 +575,20 @@ PHP_METHOD(Storage, key)
 {
     php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
 
-    ZEND_PARSE_PARAMETERS_NONE();
-
-    RETURN_LONG(s->storage->current_item - 1);
+    RETURN_LONG(s->storage->current_item);
 } /* }}} */
 
 ZEND_BEGIN_ARG_INFO_EX(php_lessram_storage_next_info, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
 /* {{{ proto void Storage::next(void) */
-PHP_METHOD(Storage, next){}
+PHP_METHOD(Storage, next)
+{
+    php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
+
+    s->current++;
+    data_storage_forward(s->storage, s->current);
+}
 /* }}} */
 
 ZEND_BEGIN_ARG_INFO_EX(php_lessram_storage_rewind_info, 0, 0, 0)
@@ -572,9 +599,8 @@ PHP_METHOD(Storage, rewind)
 {
     php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
 
-    ZEND_PARSE_PARAMETERS_NONE();
-
-    data_storage_rewind(s->storage);
+    s->current = 0;
+    data_storage_rewind(s->storage, 0);
 } /* }}} */
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(php_lessram_storage_valid_info, 0, 0, _IS_BOOL, 0)
@@ -585,9 +611,7 @@ PHP_METHOD(Storage, valid)
 {
     php_lessram_storage_t* s = php_lessram_storage_fetch(getThis());
 
-    ZEND_PARSE_PARAMETERS_NONE();
-
-    RETURN_BOOL(s->storage->list_size > s->storage->current_item);
+    RETURN_BOOL(s->storage->list_size > s->current);
 } /* }}} */
 
 /* {{{ */
@@ -661,9 +685,9 @@ const zend_function_entry php_lessram_storage_methods[] = {
         ZEND_ACC_PUBLIC
     )
     /* Iterator Methods */
-    PHP_MALIAS(
-        Storage, current, getNext,
-        php_lessram_storage_get_next_info,
+    PHP_ME(
+        Storage, current,
+        php_lessram_storage_current_info,
         ZEND_ACC_PUBLIC
     )
     PHP_ME(

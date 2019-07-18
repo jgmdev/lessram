@@ -162,6 +162,8 @@ bool data_storage_edit(
 
 DataString data_storage_get(DataStorage* storage, size_t position);
 
+DataString data_storage_get_current(DataStorage* storage);
+
 bool data_storage_remove(
     DataStorage* storage, size_t position
 );
@@ -174,6 +176,8 @@ DataString data_storage_get_next(DataStorage* storage);
 
 DataString* data_storage_get_next_copy(DataStorage* storage);
 
-void data_storage_rewind(DataStorage* storage);
+bool data_storage_forward(DataStorage* storage, size_t to);
+
+bool data_storage_rewind(DataStorage* storage, size_t to);
 
 #endif

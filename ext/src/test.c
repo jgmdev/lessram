@@ -14,7 +14,7 @@
 
 #include "datastore.h"
 
-const size_t append = 165;
+const size_t append = 1024*1024;
 const size_t prepend = 0;
 
 int main(int argc, char** argv)
@@ -64,7 +64,7 @@ int main(int argc, char** argv)
 
     printf("\nDataStorage tests:\n");
     printf("============================\n");
-    DataStorage* storage = data_storage_new_with_index_and_list();
+    DataStorage* storage = data_storage_new_with_index();
 
     struct timeval time_append;
     gettimeofday(&time_append, NULL);
@@ -73,13 +73,47 @@ int main(int argc, char** argv)
     char buffer[25];
     for(size_t i=0; i<append; i++)
     {
-        sprintf(buffer, "%s - %zu\n", "~hello ~ world~", i);
+        sprintf(buffer, "%s - %zu", "hello world", i);
         int len = strlen(buffer);
         memcpy(value->string, buffer, len);
         value->len = len;
 
         data_storage_append(storage, value);
     }
+
+    for(size_t i=0; i<storage->list_size; i++)
+    {
+        sprintf(buffer, "%s - %zu", "hola mundo", i);
+        int len = strlen(buffer);
+        memcpy(value->string, buffer, len);
+        value->len = len;
+
+        data_storage_edit(storage, i, value);
+
+        printf("%zu\n", i);
+    }
+
+    data_storage_rewind(storage, 0);
+
+    for(size_t i=0; i<storage->list_size; i++)
+    {
+        DataString data = data_storage_get_next(storage);
+        data_string_print(&data);
+    }
+    //data_string_print(storage->elements);
+
+    return 0;
+
+    data_storage_rewind(storage, 0);
+    data_storage_forward(storage, 4);
+    DataString current = data_storage_get_current(storage);
+    data_string_println(&current);
+
+    return 0;
+
+    data_storage_forward(storage, 164);
+
+    return 0;
 
     struct timeval time_append_finish;
     gettimeofday(&time_append_finish, NULL);

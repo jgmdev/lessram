@@ -12,6 +12,7 @@ extern zend_class_entry *lessramStorage_ce;
 typedef struct _php_lessram_storage_t {
 	zval* this;
 	DataStorage* storage;
+	size_t current;
 	zend_object std;
 } php_lessram_storage_t;
 

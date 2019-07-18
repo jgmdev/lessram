@@ -1013,6 +1013,26 @@ void data_storage_append(DataStorage* storage, DataString* value)
         return;
     }
 
+    if(storage->index)
+    {
+        data_index_append(
+            storage->index,
+            storage->elements->len,
+            storage->elements->len + value->len - 1
+        );
+
+        data_string_append_string(
+            storage->elements, 
+            value->string, 
+            value->len, 
+            DATASTORE_BUFFER
+        );
+
+        storage->list_size++;
+
+        return;
+    }
+
     data_string_replace(&SEPARATOR, &SEPARATOR_REPLACE, value);
 
     bool reallocated = false;
@@ -1038,15 +1058,6 @@ void data_storage_append(DataStorage* storage, DataString* value)
         value->len
     );
 
-    if(storage->index)
-    {
-        data_index_append(
-            storage->index,
-            storage->elements->len+1,
-            storage->elements->len + value->len
-        );
-    }
-
     storage->elements->len += value->len+1;
 
     if(!reallocated)
@@ -1065,6 +1076,35 @@ void data_storage_prepend(DataStorage* storage, DataString* value)
         data_list_prepend(storage->list, value->string, value->len);
 
         storage->list_size++;
+
+        return;
+    }
+
+    if(storage->index)
+    {
+        data_index_prepend(
+            storage->index,
+            0,
+            value->len - 1
+        );
+
+        data_string_prepend_string(
+            storage->elements, 
+            value->string, 
+            value->len, 
+            DATASTORE_BUFFER
+        );
+
+        if(storage->index->count > 1)
+        {
+            size_t shift = value->len;
+
+            for(size_t i=1; i<storage->index->count; i++)
+            {
+                storage->index->start[i] += shift;
+                storage->index->end[i] += shift;
+            }
+        }
 
         return;
     }
@@ -1094,26 +1134,6 @@ void data_storage_prepend(DataStorage* storage, DataString* value)
         value->string,
         value->len
     );
-
-    if(storage->index)
-    {
-        data_index_prepend(
-            storage->index,
-            1,
-            value->len
-        );
-
-        if(storage->index->count > 1)
-        {
-            size_t shift = value->len+1;
-
-            for(size_t i=1; i<storage->index->count; i++)
-            {
-                storage->index->start[i] += shift;
-                storage->index->end[i] += shift;
-            }
-        }
-    }
 
     storage->elements->len += value->len+1;
 
@@ -1157,6 +1177,10 @@ bool data_storage_edit(
 
         previous_len = end - start + 1;
 
+        storage->index->end[position] = storage->index->start[position] 
+            + value->len - 1
+        ;
+
         if(previous_len > value->len)
         {
             size_t unshift = previous_len - value->len;
@@ -1187,8 +1211,15 @@ bool data_storage_edit(
         return true;
     }
 
-    //size_t str_pos = 0;
-    //DataString current_value = data_storage_get(position, str_pos);
+    DataString current_value = data_storage_get(storage, position);
+
+    data_string_replace_position(
+        storage->elements, 
+        value, 
+        current_value.string - storage->elements->string,
+        (current_value.string - storage->elements->string) 
+        + current_value.len - 1
+    );
 
     return true;
 }
@@ -1237,6 +1268,131 @@ DataString data_storage_get(DataStorage* storage, size_t position)
         return data;
     }
 
+    double target_percent = 100
+        * (
+            (double) position / (double) storage->list_size-1
+        )
+    ;
+    double current_percent = 100
+        * (
+            (double) storage->current_item / (double) storage->list_size-1
+        )
+    ;
+
+    if(target_percent == current_percent)
+    {
+        // We don't need to move
+    }
+    else if(target_percent > current_percent)
+    {
+        if(target_percent - current_percent > 100 - target_percent)
+        {
+            data_storage_forward(storage, storage->list_size-1);
+            data_storage_rewind(storage, position);
+        }
+        else
+        {
+            data_storage_forward(storage, position);
+        }
+    }
+    else
+    {
+        if(current_percent - target_percent > target_percent)
+        {
+            data_storage_rewind(storage, 0);
+            data_storage_forward(storage, position);
+        }
+        else
+        {
+            data_storage_rewind(storage, position);
+        }
+    }
+
+    data = data_storage_get_current(storage);
+
+    return data;
+}
+
+DataString data_storage_get_current(DataStorage* storage)
+{
+    DataString data = {"", 0, 0};
+
+    size_t position = storage->current_item;
+
+    if(position >= storage->list_size)
+    {
+        return data;
+    }
+
+    if(storage->index && storage->list)
+    {
+        size_t end;
+
+        data_index_get(
+            storage->index,
+            position,
+            (void*) NULL, &end
+        );
+
+        data.string = storage->list->items[position];
+
+        data.len = (storage->list->items[position] + end)
+            - storage->list->items[position]
+            + 1
+        ;
+
+        return data;
+    }
+    else if(storage->index)
+    {
+        size_t start, end;
+
+        data_index_get(
+            storage->index,
+            position,
+            &start, &end
+        );
+
+        data.string = storage->elements->string+start;
+        data.len = end - start + 1;
+
+        return data;
+    }
+
+    char* elements = storage->elements->string;
+
+    size_t elements_len = storage->elements->len,
+        i = storage->current_position,
+        len = 0
+    ;
+
+    i++; //Skip starting ~
+
+    // Empty value
+    if(i >= elements_len || elements[i] == '~')
+    {
+        return data;
+    }
+
+    do
+    {
+        if(elements[i] == '\\' && elements[i+1] == '~')
+        {
+            len++;
+            i++;
+        }
+
+        len++;
+
+        i++;
+    }
+    while(i < elements_len && elements[i] != '~');
+
+    size_t start_pos = storage->current_position+1;
+
+    data.string = &(storage->elements->string[start_pos]);
+    data.len = len;
+
     return data;
 }
 
@@ -1265,17 +1421,40 @@ bool data_storage_remove(
 
         DataString empty = {"", 0, 0};
 
-        data_string_replace_position(storage->elements, &empty, start-1, end);
+        data_string_replace_position(storage->elements, &empty, start, end);
 
         data_index_delete(storage->index, position);
 
         storage->list_size--;
 
+        if(storage->index->count > 1)
+        {
+            size_t unshift = end - start + 1;
+            size_t index_count = storage->index->count;
+
+            for(size_t i=position; i<index_count; i++)
+            {
+                storage->index->start[i] -= unshift;
+                storage->index->end[i] -= unshift;
+            }
+        }
+
         return true;
     }
 
-    //size_t str_pos = 0;
-    //DataString current_value = data_storage_get(position, str_pos);
+    DataString current_value = data_storage_get(storage, position);
+    DataString replacement = {"", 0, 0};
+
+    data_string_replace_position(
+        storage->elements, 
+        &replacement, 
+        current_value.string - storage->elements->string - 1,
+        (
+            current_value.string - storage->elements->string
+        ) + current_value.len - 1
+    );
+
+    storage->list_size--;
 
     return true;
 }
@@ -1299,11 +1478,6 @@ void data_storage_clear(DataStorage* storage)
 DataString data_storage_get_next(DataStorage* storage)
 {
     DataString data = {"", 0, 0};
-    if(storage->current_item >= storage->list_size)
-    {
-        storage->current_item = 0;
-        storage->current_position = 0;
-    }
 
     if(storage->index && storage->list)
     {
@@ -1344,6 +1518,8 @@ DataString data_storage_get_next(DataStorage* storage)
         return data;
     }
 
+    char* elements = storage->elements->string;
+
     size_t elements_len = storage->elements->len,
         i = storage->current_position,
         len = 0
@@ -1352,18 +1528,20 @@ DataString data_storage_get_next(DataStorage* storage)
     i++; //Skip starting ~
 
     // Empty value
-    if(i >= elements_len || storage->elements->string[i] == '~')
+    if(elements[i] == '~')
     {
+        if(storage->current_item+1 != storage->list_size)
+        {
+            storage->current_item++;
+            storage->current_position = i;
+        }
+
         return data;
     }
 
     do
     {
-        if(
-            storage->elements->string[i] == '\\'
-            &&
-            storage->elements->string[i+1] == '~'
-        )
+        if(elements[i] == '\\' && elements[i+1] == '~')
         {
             len++;
             i++;
@@ -1373,16 +1551,15 @@ DataString data_storage_get_next(DataStorage* storage)
 
         i++;
     }
-    while(
-        i < elements_len
-        &&
-        storage->elements->string[i] != '~'
-    );
+    while(i < elements_len && elements[i] != '~');
 
     size_t start_pos = storage->current_position+1;
 
-    storage->current_item++;
-    storage->current_position = i;
+    if(storage->current_item+1 != storage->list_size)
+    {
+        storage->current_item++;
+        storage->current_position = i;
+    }
 
     data.string = &(storage->elements->string[start_pos]);
     data.len = len;
@@ -1392,109 +1569,136 @@ DataString data_storage_get_next(DataStorage* storage)
 
 DataString* data_storage_get_next_copy(DataStorage* storage)
 {
-    if(storage->current_item >= storage->list_size)
+    if(storage->list_size == 0)
     {
-        storage->current_item = 0;
-        storage->current_position = 0;
+        return NULL;
     }
 
-    DataString* value = data_string_new("", 0, 200);
-
-    if(storage->index && storage->list)
-    {
-        size_t end, len;
-
-        data_index_get(
-            storage->index,
-            storage->current_item,
-            (void*) NULL, &end
-        );
-
-        len = (storage->list->items[storage->current_item] + end)
-            - storage->list->items[storage->current_item]
-            + 1
-        ;
-
-        data_string_append_string(
-            value,
-            storage->list->items[storage->current_item],
-            len,
-            0
-        );
-
-        storage->current_item++;
-
-        return value;
-    }
-    else if(storage->index)
-    {
-        size_t start, end;
-
-        data_index_get(
-            storage->index,
-            storage->current_item,
-            &start, &end
-        );
-
-        data_string_append_string(
-            value,
-            storage->elements->string+start,
-            end - start + 1,
-            0
-        );
-
-        storage->current_item++;
-
-        return value;
-    }
-
-    size_t elements_len = storage->elements->len;
-    size_t i=storage->current_position, len = 0;
-
-    i++; //Skip starting ~
-
-    // Empty value
-    if(i >= elements_len || storage->elements->string[i] == '~')
-    {
-        return value;
-    }
-
-    do
-    {
-        if(
-            storage->elements->string[i] == '\\'
-            &&
-            storage->elements->string[i+1] == '~'
-        )
-        {
-            len++;
-            i++;
-        }
-
-        len++;
-
-        i++;
-    }
-    while(
-        i < elements_len
-        &&
-        storage->elements->string[i] != '~'
-    );
-
-    size_t start_pos = storage->current_position+1;
-
-    storage->current_item++;
-    storage->current_position = i;
-
-    data_string_append_string(
-        value, &(storage->elements->string[start_pos]), len, 0
-    );
+    DataString data = data_storage_get_next(storage);
+    DataString* value = data_string_new(data.string, data.len, 0);
 
     return value;
 }
 
-void data_storage_rewind(DataStorage* storage)
+bool data_storage_forward(DataStorage* storage, size_t to)
 {
-    storage->current_item = 0;
-    storage->current_position = 0;
+    if(
+        to >= storage->list_size
+        ||
+        to < storage->current_item
+        ||
+        to == storage->current_item
+    )
+    {
+        return false;
+    }
+
+    if(storage->index)
+    {
+        storage->current_item = to;
+        return true;
+    }
+
+    // Faster to move to last position and then rewind
+    if(to+1 == storage->list_size)
+    {
+        storage->current_position = storage->elements->len-1;
+
+        char* elements = storage->elements->string;
+        size_t i = storage->current_position;
+
+        do
+        {
+            i--;
+        }
+        while(i > 0 && (elements[i] != '~' || elements[i-1] == '\\'));
+
+        storage->current_item = to;
+        storage->current_position = i;
+    }
+
+    char* elements = storage->elements->string;
+
+    size_t elements_len = storage->elements->len,
+        i = storage->current_position,
+        len = 0
+    ;
+
+    while(storage->current_item != to)
+    {
+        i++; //Skip starting ~
+
+        // Empty value
+        if(elements[i] == '~')
+        {
+            storage->current_item++;
+            storage->current_position = i;
+
+            continue;
+        }
+
+        do
+        {
+            if(elements[i] == '\\' && elements[i+1] == '~')
+            {
+                len++;
+                i++;
+            }
+
+            len++;
+
+            i++;
+        }
+        while(i < elements_len && elements[i] != '~');
+
+        storage->current_item++;
+        storage->current_position = i;
+    }
+
+    return true;
+}
+
+bool data_storage_rewind(DataStorage* storage, size_t to)
+{
+    if(
+        to < 0
+        ||
+        to > storage->current_item
+        ||
+        to == storage->current_item
+    )
+    {
+        return false;
+    }
+
+    if(to == 0)
+    {
+        storage->current_item = 0;
+        storage->current_position = 0;
+
+        return true;
+    }
+
+    if(storage->index)
+    {
+        storage->current_item = to;
+        return true;
+    }
+
+    char* elements = storage->elements->string;
+    size_t i = storage->current_position;
+
+    while(storage->current_item != to)
+    {
+        do
+        {
+            i--;
+        }
+        while(i > 0 && (elements[i] != '~' || elements[i-1] == '\\'));
+
+        storage->current_item--;
+        storage->current_position = i;
+    }
+
+    return true;
 }

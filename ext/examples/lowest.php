@@ -2,10 +2,12 @@
 
 use LessRam\Storage;
 
-$list = new Storage(Storage::LOWEST);
+$amount = 10;
+
+$list = new Storage();
 
 $time_add = microtime(true);
-for($i=0; $i<10; $i++)
+for($i=0; $i<$amount; $i++)
 {
     $list[] = ["hello ~ $i"];
 }
@@ -21,17 +23,16 @@ foreach($list as $value){}
 $time_loop_end = (microtime(true) - $time_loop);
 
 $time_edit = microtime(true);
-for($i=0; $i<10; $i++)
+for($i=0; $i<$amount; $i++)
 {
     $list[$i] = ["hola ~ $i"];
 }
 $time_edit_end = (microtime(true) - $time_edit);
 
 // This kind of stuff isn't supported (we don't store zvals)
-$list[4][0] .= "something";
+unset($list[2]);
+unset($list[3]);
 
-unset($list[9]);
-unset($list[8]);
 foreach($list as $index => $value)
 {
     print "$index => {$value[0]}\n";
@@ -40,6 +41,3 @@ foreach($list as $index => $value)
 echo "Add time: " . $time_add_end . "\n";
 echo "Loop time: " . $time_loop_end . "\n";
 echo "Edit time: " . $time_edit_end . "\n";
-
-// Generate exception
-print $list[20];

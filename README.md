@@ -2,7 +2,7 @@
 
 PHP implementations of array data structures that consume less memory
 than native php arrays with the drawback of been less performant. For a faster
-version check the C the implementation on the 
+version check the C implementation on the 
 [ext](https://github.com/jgmdev/lessram/tree/master/ext) directory.
 
 ## Usage

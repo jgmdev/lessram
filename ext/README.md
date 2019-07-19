@@ -131,6 +131,6 @@ SplDoublyLinkedL |        0.15s |    0.02s |      0.18s |          41MB
 
 * ~Implement additional data storage container to store objects and resources.~
   (This is possible now without adding additional storage but what is the fastest
-  way of unreferencing this resources on object destruction?)
+  way of unreferencing these resources on object destruction?)
 * Implement Serializable interfaces
 * Add support for associative indexes.

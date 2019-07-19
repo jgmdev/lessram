@@ -98,6 +98,31 @@ function test_storeStrings($amount=1024*1024, $real=false)
     $dynamic_l_total_time = microtime(true) - $dynamic_l_total_time;
 
 
+    // Measure List
+    $lr_list_total_time = microtime(true);
+    $list = new LessRam\ListStore($amount);
+
+    // adding items
+    $lr_list_add_time = microtime(true);
+    for($i=0; $i<$amount; $i++)
+    {
+        $list->append("hello world" . $i);
+    }
+    $lr_list_add_time = microtime(true) - $lr_list_add_time;
+
+    // loop all data
+    $lr_list_loop_time = microtime(true);
+    for($i=0; $i<$amount; $i++)
+    {
+        $list->getNext();
+    }
+    $lr_list_loop_time = microtime(true) - $lr_list_loop_time;
+
+    $lr_list_memory_usage = ceil(memory_get_usage($real) / 1024 / 1024) . "MB";
+
+    $lr_list_total_time = microtime(true) - $lr_list_total_time;
+
+
     // Mesure SplFixedArray
     $splfixed_total_time = microtime(true);
     $list = new SplFixedArray($amount+1);
@@ -250,6 +275,15 @@ function test_storeStrings($amount=1024*1024, $real=false)
 
     printf(
         $format,
+        'LessRam List',
+        number_format($lr_list_add_time, 2) . "s",
+        number_format($lr_list_loop_time, 2) . "s",
+        number_format($lr_list_total_time, 2) . "s",
+        $lr_list_memory_usage
+    );
+
+    printf(
+        $format,
         'SplFixedArray',
         number_format($splfixed_add_time, 2) . "s",
         number_format($splfixed_loop_time, 2) . "s",
@@ -372,6 +406,31 @@ function test_storeArrays($amount=1024*1024, $real=false)
     $dynamic_l_memory_usage = ceil(memory_get_usage($real) / 1024 / 1024) . "MB";
 
     $dynamic_l_total_time = microtime(true) - $dynamic_l_total_time;
+
+
+    // Measure List
+    $lr_list_total_time = microtime(true);
+    $list = new LessRam\ListStore($amount);
+
+    // adding items
+    $lr_list_add_time = microtime(true);
+    for($i=0; $i<$amount; $i++)
+    {
+        $list->append(["name" => "hello world" . $i]);
+    }
+    $lr_list_add_time = microtime(true) - $lr_list_add_time;
+
+    // loop all data
+    $lr_list_loop_time = microtime(true);
+    for($i=0; $i<$amount; $i++)
+    {
+        $list->getNext();
+    }
+    $lr_list_loop_time = microtime(true) - $lr_list_loop_time;
+
+    $lr_list_memory_usage = ceil(memory_get_usage($real) / 1024 / 1024) . "MB";
+
+    $lr_list_total_time = microtime(true) - $lr_list_total_time;
 
 
     // Mesure SplFixedArray
@@ -573,6 +632,15 @@ function test_storeArrays($amount=1024*1024, $real=false)
 
     printf(
         $format,
+        'LessRam List',
+        number_format($lr_list_add_time, 2) . "s",
+        number_format($lr_list_loop_time, 2) . "s",
+        number_format($lr_list_total_time, 2) . "s",
+        $lr_list_memory_usage
+    );
+
+    printf(
+        $format,
         'SplFixedArray',
         number_format($splfixed_add_time, 2) . "s",
         number_format($splfixed_loop_time, 2) . "s",
@@ -714,6 +782,31 @@ function test_storeIntegers($amount=1024*1024, $real=false)
     $dynamic_l_memory_usage = ceil(memory_get_usage($real) / 1024 / 1024) . "MB";
 
     $dynamic_l_total_time = microtime(true) - $dynamic_l_total_time;
+
+
+    // Measure List
+    $lr_list_total_time = microtime(true);
+    $list = new LessRam\ListStore($amount);
+
+    // adding items
+    $lr_list_add_time = microtime(true);
+    for($i=0; $i<$amount; $i++)
+    {
+        $list->append($i);
+    }
+    $lr_list_add_time = microtime(true) - $lr_list_add_time;
+
+    // loop all data
+    $lr_list_loop_time = microtime(true);
+    for($i=0; $i<$amount; $i++)
+    {
+        $list->getNext();
+    }
+    $lr_list_loop_time = microtime(true) - $lr_list_loop_time;
+
+    $lr_list_memory_usage = ceil(memory_get_usage($real) / 1024 / 1024) . "MB";
+
+    $lr_list_total_time = microtime(true) - $lr_list_total_time;
 
 
     // Mesure SplFixedArray
@@ -864,6 +957,15 @@ function test_storeIntegers($amount=1024*1024, $real=false)
         number_format($dynamic_l_loop_time, 2) . "s",
         number_format($dynamic_l_total_time, 2) . "s",
         $dynamic_l_memory_usage
+    );
+
+    printf(
+        $format,
+        'LessRam List',
+        number_format($lr_list_add_time, 2) . "s",
+        number_format($lr_list_loop_time, 2) . "s",
+        number_format($lr_list_total_time, 2) . "s",
+        $lr_list_memory_usage
     );
 
     printf(

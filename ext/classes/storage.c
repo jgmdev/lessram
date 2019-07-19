@@ -563,6 +563,8 @@ PHP_METHOD(Storage, offsetGet)
             data_storage_get(s->storage, offset_val),
             return_value
         );
+
+        return;
     }
 
     RETURN_NULL()

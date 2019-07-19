@@ -10,6 +10,27 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef USE_RP_MALLOC
+    #include "rpmalloc/rpmalloc.h"
+    #define dsmalloc(bytes) rpmalloc(bytes)
+    #define dsrealloc(pointer, bytes) rprealloc(pointer, bytes)
+    #define dsfree(pointer) rpfree(pointer)
+#elif defined(USE_C_MALLOC)
+    #include <stdlib.h>
+    #define dsmalloc(bytes) malloc(bytes)
+    #define dsrealloc(pointer, bytes) realloc(pointer, bytes)
+    #define dsfree(pointer) free(pointer)
+#else
+    #include "php.h"
+    #define dsmalloc(bytes) emalloc(bytes)
+    #define dsrealloc(pointer, bytes) erealloc(pointer, bytes)
+    #define dsfree(pointer) efree(pointer)
+#endif
+
 #define DS_STR(s) s, sizeof(s)-1
 
 typedef struct _DataIndex {

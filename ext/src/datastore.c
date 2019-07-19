@@ -4,22 +4,10 @@
  * @link https://github.com/jgmdev/lessram Source code.
 */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "datastore.h"
-
-#ifdef USE_C_MALLOC
-    #define dsmalloc(bytes) malloc(bytes)
-    #define dsrealloc(pointer, bytes) realloc(pointer, bytes)
-    #define dsfree(pointer) free(pointer)
-#else
-    #include "php.h"
-    #define dsmalloc(bytes) emalloc(bytes)
-    #define dsrealloc(pointer, bytes) erealloc(pointer, bytes)
-    #define dsfree(pointer) efree(pointer)
-#endif
 
 static const int DATASTORE_BUFFER = 1024 * 2; // 2 Kilobytes of buffer
 

@@ -13,13 +13,32 @@
 #include <sys/time.h>
 
 #include "datastore.h"
+#include "datastoresimple.h"
+#include "rpmalloc/rpmalloc.h"
 
 const size_t append = 1024*1024;
 const size_t prepend = 0;
 
 int main(int argc, char** argv)
 {
-    DataStorage* storage = data_storage_new_with_index_and_list();
+    DataStorageSimple* simple = data_storage_simple_new(100);
+
+    for(size_t i=0; i<1024; i++)
+    {
+        data_storage_simple_append_bytes(simple, DS_STR("hola mundo 1234"));
+    }
+
+    for(size_t i=0; i<1024; i++)
+    {
+        data_storage_simple_get_next(simple);
+    }
+
+    data_storage_simple_free(simple);
+
+    return 0;
+
+    rpmalloc_initialize();
+    DataStorage* storage = data_storage_new();
 
     for(size_t i=0; i<append; i++)
     {
@@ -38,6 +57,8 @@ int main(int argc, char** argv)
     }
 
     data_storage_free(storage);
+
+    rpmalloc_finalize();
 
     return 0;
 

@@ -9,6 +9,7 @@
 #endif
 
 #include <src/datastore.h>
+#include <src/datastoresimple.h>
 
 #include "php.h"
 #include "php_ini.h"
@@ -16,12 +17,22 @@
 #include "php_lessram.h"
 
 #include <classes/storage.h>
+#include <classes/list.h>
+
+#ifdef USE_RP_MALLOC
+    #include <src/rpmalloc/rpmalloc.h>
+#endif
 
 /* {{{ PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(lessram)
 {
+    #ifdef USE_RP_MALLOC
+        rpmalloc_initialize();
+    #endif
+    
     PHP_MINIT(LessRam_Storage)(INIT_FUNC_ARGS_PASSTHRU);
+    PHP_MINIT(LessRam_List)(INIT_FUNC_ARGS_PASSTHRU);
 
     return SUCCESS;
 }
@@ -31,6 +42,10 @@ PHP_MINIT_FUNCTION(lessram)
  */
 PHP_MSHUTDOWN_FUNCTION(lessram)
 {
+    #ifdef USE_RP_MALLOC
+        rpmalloc_finalize();
+    #endif
+
     return SUCCESS;
 }
 /* }}} */
@@ -41,6 +56,13 @@ PHP_MINFO_FUNCTION(lessram)
 {
     php_info_print_table_start();
     php_info_print_table_header(2, "lessram support", "enabled");
+    #ifdef USE_RP_MALLOC
+        php_info_print_table_header(2, "lessram malloc", "rpmalloc");
+    #elif defined(USE_C_MALLOC)
+        php_info_print_table_header(2, "lessram malloc", "std. malloc");
+    #else
+        php_info_print_table_header(2, "lessram malloc", "php malloc");
+    #endif
     php_info_print_table_end();
 }
 /* }}} */

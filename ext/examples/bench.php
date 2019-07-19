@@ -3,21 +3,21 @@
 echo "=======================================================================\n";
 echo "String store test with native C extension:\n";
 echo "=======================================================================\n";
-test_storeStrings((1024*1024) * 2, false);
+test_storeStrings((1024*1024)*1, false);
 
 echo "\n\n";
 
 echo "=======================================================================\n";
 echo "Array store test with native C extension:\n";
 echo "=======================================================================\n";
-test_storeArrays((1024*1024)*2, false);
+test_storeArrays((1024*1024)*1, false);
 
 echo "\n\n";
 
 echo "=======================================================================\n";
 echo "Integers store test with native C extension:\n";
 echo "=======================================================================\n";
-test_storeIntegers((1024*1024)*2, false);
+test_storeIntegers((1024*1024)*1, false);
 
 echo "\n";
 

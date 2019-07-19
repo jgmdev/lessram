@@ -14,19 +14,19 @@
 
 #include "datastore.h"
 
-const size_t append = 1000;
+const size_t append = 1024*1024;
 const size_t prepend = 0;
 
 int main(int argc, char** argv)
 {
-    DataStorage* storage = data_storage_new_with_index();
+    DataStorage* storage = data_storage_new_with_index_and_list();
 
-    for(size_t i=0; i<1024; i++)
+    for(size_t i=0; i<append; i++)
     {
         char value[25];
         sprintf(value, "[\"hello ~ %zu\"]", i);
 
-        data_value_define_json(val, value, strlen(value), 0);
+        data_value_define_json(val, value, strlen(value), 10);
         data_storage_append(storage, val);
     }
 
@@ -34,20 +34,14 @@ int main(int argc, char** argv)
     {
         DataValue value = data_storage_get_next(storage);
 
-        switch(value.type)
-        {
-            case DT_STRING:
-            case DT_JSON:
-                data_string_println(value.value.string_alloc);
-                break;
-            default:
-                break;
-        }
-
         data_value_free(value);
     }
 
-    for(size_t i=0; i<1024; i++)
+    data_storage_free(storage);
+
+    return 0;
+
+    for(size_t i=0; i<storage->list_size; i++)
     {
         char value[25];
         sprintf(value, "[\"hola ~ %zu\"]", i);

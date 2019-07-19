@@ -204,20 +204,28 @@ static zend_always_inline void php_lessram_data_value_to_zval(
         }
         case DT_STRING:
         {
-            if(!storage->list)
+            if(!storage->index)
             {
                 data_string_replace(
                     &SEP_CHAR, &SEPR_CHAR, data.value.string_alloc
                 );
+
+                ZVAL_STRINGL(
+                    value, 
+                    data.value.string_alloc->string,
+                    data.value.string_alloc->len
+                );
+
+                data_value_free(data);
             }
-
-            ZVAL_STRINGL(
-                value, 
-                data.value.string_alloc->string,
-                data.value.string_alloc->len
-            );
-
-            data_value_free(data);
+            else
+            {
+                ZVAL_STRINGL(
+                    value, 
+                    data.value.string.string,
+                    data.value.string.len
+                );
+            }
 
             break;
         }
@@ -228,24 +236,38 @@ static zend_always_inline void php_lessram_data_value_to_zval(
         }
         case DT_JSON:
         {
-            if(!storage->list)
+            if(!storage->index)
             {
                 data_string_replace(
                     &SEPR_CHAR, &SEP_CHAR, data.value.string_alloc
                 );
 
                 data_string_append(data.value.string_alloc, '\0', 0);
-            }
-            
-            php_json_decode(
-                value,
-                data.value.string_alloc->string,
-                data.value.string_alloc->len-1,
-                1,
-                PHP_JSON_PARSER_DEFAULT_DEPTH
-            );
 
-            data_value_free(data);
+                php_json_decode(
+                    value,
+                    data.value.string_alloc->string,
+                    data.value.string_alloc->len-1,
+                    1,
+                    PHP_JSON_PARSER_DEFAULT_DEPTH
+                );
+
+                data_value_free(data);
+            }
+            else
+            {
+                
+                char last = data.value.string.string[data.value.string.len];
+                data.value.string.string[data.value.string.len] = '\0';
+                php_json_decode(
+                    value,
+                    data.value.string.string,
+                    data.value.string.len-1,
+                    1,
+                    PHP_JSON_PARSER_DEFAULT_DEPTH
+                );
+                data.value.string.string[data.value.string.len] = last;
+            }
 
             break;
         }

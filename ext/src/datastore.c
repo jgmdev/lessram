@@ -1095,17 +1095,17 @@ static inline void data_storage_value_from_bytes(
         }
         case DT_STRING:
         {
-            data_value_set_string_alloc((*value), bytes+1, len, 0);
+            data_value_set_string((*value), bytes+1, len, 0);
             return;
         }
         case DT_BOOLEAN:
         {
-            data_value_set_boolean_from_bytes((*value), bytes+1);
+            data_value_set_boolean_from_bytes((*value), bytes[1]);
             return;
         }
         case DT_JSON:
         {
-            data_value_set_json_alloc((*value), bytes+1, len, 0);
+            data_value_set_json((*value), bytes+1, len, 0);
             return;
         }
     }
@@ -1901,9 +1901,9 @@ DataValue data_storage_get_next(DataStorage* storage)
             (void*) NULL, &end
         );
 
-        data_storage_value_from_bytes(
-            &data, 
-            (char*) storage->list->items[storage->current_item],
+        data_value_from_bytes(
+            data, 
+            ((char*) storage->list->items[storage->current_item]),
             (storage->list->items[storage->current_item] + end)
                 - storage->list->items[storage->current_item]
         );
@@ -1925,9 +1925,9 @@ DataValue data_storage_get_next(DataStorage* storage)
             &start, &end
         );
 
-        data_storage_value_from_bytes(
-            &data, 
-            storage->elements->string+start,
+        data_value_from_bytes(
+            data, 
+            (storage->elements->string+start),
             end - start
         );
 
@@ -2163,17 +2163,17 @@ bool data_storage_rewind(DataStorage* storage, size_t to)
         return false;
     }
 
+    if(storage->index)
+    {
+        storage->current_item = to;
+        return true;
+    }
+
     if(to == 0)
     {
         storage->current_item = 0;
         storage->current_position = 0;
 
-        return true;
-    }
-
-    if(storage->index)
-    {
-        storage->current_item = to;
         return true;
     }
 

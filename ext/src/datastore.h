@@ -145,7 +145,7 @@ typedef struct _DataValue {
     name.value.string_alloc = data_string_new(val, size, buf+1); \
     name.value.string_alloc->string[size] = '\0'
 
-#define data_value_set_json(name, val, size) \
+#define data_value_set_json(name, val, size, buf) \
     name.type = DT_JSON; \
     name.alloc_str = false; \
     name.value.string.string = val; \
@@ -197,6 +197,42 @@ typedef struct _DataValue {
     name.type = DT_BOOLEAN; \
     name.alloc_str = false; \
     name.value.boolean.bytes[0] = byte
+
+// Testing to see if inlining is faster
+#define data_value_from_bytes(value, bytes, len) \
+    switch(bytes[0]) \
+    { \
+        case DT_POINTER: \
+        { \
+            data_value_set_pointer_from_bytes(value, bytes+1); \
+            break; \
+        } \
+        case DT_INTEGER: \
+        { \
+            data_value_set_integer_from_bytes(value, bytes+1); \
+            break; \
+        } \
+        case DT_DOUBLE: \
+        { \
+            data_value_set_double_from_bytes(value, bytes+1); \
+            break; \
+        } \
+        case DT_STRING: \
+        { \
+            data_value_set_string(value, bytes+1, len, 0); \
+            break; \
+        } \
+        case DT_BOOLEAN: \
+        { \
+            data_value_set_boolean_from_bytes(value, bytes[1]); \
+            break; \
+        } \
+        case DT_JSON: \
+        { \
+            data_value_set_json(value, bytes+1, len, 0); \
+            break; \
+        } \
+    }
 
 DataIndex* data_index_new(size_t buffer);
 

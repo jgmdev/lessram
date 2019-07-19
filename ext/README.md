@@ -1,3 +1,7 @@
+**Note:** This branch implements some additional ideas to be able to store any
+scalar type inside a bytes string, which decrease performance a bit. Check
+the benchmarks below and compare with master branch.
+
 # PHP-LESSRAM
 
 This is the C extension version of the data structures, it is a work in
@@ -83,43 +87,43 @@ implementation of same algorithm.
 String store test with native C extension:
 =======================================================================
       Structures |  add 1048576 | loop all | total time |  memory usage
- LessRam Highest |        0.21s |    0.14s |      0.36s |          19MB
-LessRam Moderate |        0.19s |    0.05s |      0.25s |          34MB
-  LessRam Lowest |        0.18s |    0.05s |      0.23s |          40MB
-   SplFixedArray |        0.10s |    0.03s |      0.15s |          65MB
-SplDoublyLinkedL |        0.23s |    0.03s |      0.28s |          89MB
-       Ds\Vector |        0.14s |    0.02s |      0.19s |          72MB
-          Ds\Map |        0.24s |    0.03s |      0.29s |          85MB
-       PHP Array |        0.12s |    0.02s |      0.17s |          81MB
+ LessRam Highest |        0.24s |    0.16s |      0.40s |          21MB
+LessRam Moderate |        0.20s |    0.07s |      0.27s |          35MB
+  LessRam Lowest |        0.20s |    0.07s |      0.28s |          41MB
+   SplFixedArray |        0.11s |    0.03s |      0.16s |          65MB
+SplDoublyLinkedL |        0.24s |    0.03s |      0.29s |          89MB
+       Ds\Vector |        0.13s |    0.02s |      0.19s |          72MB
+          Ds\Map |        0.21s |    0.03s |      0.26s |          85MB
+       PHP Array |        0.11s |    0.02s |      0.16s |          81MB
 
 
 =======================================================================
 Array store test with native C extension:
 =======================================================================
       Structures |  add 1048576 | loop all | total time |  memory usage
- LessRam Highest |        0.47s |    0.56s |      1.03s |          32MB
-LessRam Moderate |        0.41s |    0.52s |      0.94s |          47MB
-  LessRam Lowest |        0.36s |    0.39s |      0.75s |          49MB
-   SplFixedArray |        0.35s |    0.23s |      0.61s |         441MB
-SplDoublyLinkedL |        0.31s |    0.29s |      0.67s |         481MB
+ LessRam Highest |        0.46s |    0.57s |      1.03s |          32MB
+LessRam Moderate |        0.40s |    0.40s |      0.80s |          46MB
+  LessRam Lowest |        0.35s |    0.41s |      0.76s |          49MB
+   SplFixedArray |        0.36s |    0.23s |      0.61s |         441MB
+SplDoublyLinkedL |        0.30s |    0.29s |      0.67s |         481MB
        Ds\Vector |        0.23s |    0.23s |      0.55s |         448MB
-          Ds\Map |        0.29s |    0.25s |      0.62s |         461MB
-  PHP Array      |        0.22s |    0.12s |      0.42s |         457MB
-   -> JSON       |        0.47s |    0.42s |      1.03s |         289MB
-   -> Serialized |        0.29s |    0.28s |      0.60s |         289MB
+          Ds\Map |        0.28s |    0.25s |      0.61s |         461MB
+  PHP Array      |        0.23s |    0.12s |      0.44s |         457MB
+   -> JSON       |        0.49s |    0.44s |      1.06s |         289MB
+   -> Serialized |        0.29s |    0.29s |      0.60s |         289MB
 
 
 =======================================================================
 Integers store test with native C extension:
 =======================================================================
       Structures |  add 1048576 | loop all | total time |  memory usage
- LessRam Highest |        0.17s |    0.11s |      0.28s |           8MB
-LessRam Moderate |        0.15s |    0.05s |      0.20s |          23MB
-  LessRam Lowest |        0.16s |    0.05s |      0.21s |          25MB
-   SplFixedArray |        0.02s |    0.02s |      0.05s |          17MB
+ LessRam Highest |        0.10s |    0.04s |      0.14s |          12MB
+LessRam Moderate |        0.12s |    0.05s |      0.18s |          26MB
+  LessRam Lowest |        0.14s |    0.05s |      0.19s |          33MB
+   SplFixedArray |        0.02s |    0.02s |      0.06s |          17MB
 SplDoublyLinkedL |        0.15s |    0.02s |      0.18s |          41MB
        Ds\Vector |        0.09s |    0.02s |      0.13s |          24MB
-          Ds\Map |        0.14s |    0.02s |      0.17s |          37MB
+          Ds\Map |        0.15s |    0.02s |      0.17s |          37MB
        PHP Array |        0.06s |    0.01s |      0.08s |          33MB
 ```
 

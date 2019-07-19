@@ -504,7 +504,7 @@ void data_list_free(DataList* list)
 {
     if(list)
     {
-        for(size_t i=0; i<list->count; i++)
+        for(size_t i=0; i<list->count+list->buffer_left; i++)
         {
             dsfree(list->items[i]);
         }
@@ -911,10 +911,7 @@ void data_string_print(DataString* data)
     if(!data)
         return;
 
-    for(size_t i=0; i<data->len; i++)
-    {
-        printf("%c", data->string[i]);
-    }
+    fwrite(data->string, data->len, 1, stdout);
 }
 
 void data_string_println(DataString* data)
@@ -922,10 +919,7 @@ void data_string_println(DataString* data)
     if(!data)
         return;
 
-    for(size_t i=0; i<data->len; i++)
-    {
-        printf("%c", data->string[i]);
-    }
+    fwrite(data->string, data->len, 1, stdout);
 
     printf("\n");
 }
@@ -1001,14 +995,177 @@ void data_storage_free(DataStorage* storage)
     dsfree(storage);
 }
 
-void data_storage_append(DataStorage* storage, DataString* value)
+static inline DataString* data_storage_value_to_string(DataValue value)
 {
+    switch(value.type)
+    {
+        case DT_POINTER:
+        {
+            DataString* string = data_string_new(
+                "P        ", 
+                sizeof(DataPointer)+1,
+                1
+            );
+            memcpy(
+                string->string+1, 
+                value.value.pointer.bytes,
+                sizeof(DataPointer)
+            );
+
+            return string;
+        }
+        case DT_INTEGER:
+        {
+            DataString* string = data_string_new(
+                "I        ", 
+                sizeof(DataInteger)+1,
+                1
+            );
+            memcpy(
+                string->string+1, 
+                value.value.integer.bytes, 
+                sizeof(DataInteger)
+            );
+            
+            return string;
+        }
+        case DT_DOUBLE:
+        {
+            DataString* string = data_string_new(
+                "D        ", 
+                sizeof(DataDouble)+1,
+                1
+            );
+            memcpy(
+                string->string+1, 
+                value.value.double_float.bytes, 
+                sizeof(DataDouble)
+            );
+            
+            return string;
+        }
+        case DT_STRING:
+        {
+            data_string_prepend(value.value.string_alloc, 'S', 0);
+            return value.value.string_alloc;
+            break;
+        }
+        case DT_BOOLEAN:
+        {
+            DataString* string = data_string_new(
+                "B ", 
+                2,
+                1
+            );
+            string->string[1] = value.value.boolean.bytes[0];
+            return string;
+            break;
+        }
+        case DT_JSON:
+        {
+            data_string_prepend(value.value.string_alloc, 'J', 0);
+            return value.value.string_alloc;
+            break;
+        }
+    }
+
+    return NULL;
+}
+
+static inline void data_storage_value_from_bytes(
+    DataValue* value, char* bytes, size_t len
+)
+{
+    switch(bytes[0])
+    {
+        case DT_POINTER:
+        {
+            data_value_set_pointer_from_bytes((*value), bytes+1);
+            return;
+        }
+        case DT_INTEGER:
+        {
+            data_value_set_integer_from_bytes((*value), bytes+1);
+            return;
+        }
+        case DT_DOUBLE:
+        {
+            data_value_set_double_from_bytes((*value), bytes+1);
+            return;
+        }
+        case DT_STRING:
+        {
+            data_value_set_string_alloc((*value), bytes+1, len, 0);
+            return;
+        }
+        case DT_BOOLEAN:
+        {
+            data_value_set_boolean_from_bytes((*value), bytes+1);
+            return;
+        }
+        case DT_JSON:
+        {
+            data_value_set_json_alloc((*value), bytes+1, len, 0);
+            return;
+        }
+    }
+}
+
+static inline void data_storage_string_append_type(
+    DataString* string, DataType type
+)
+{
+    switch(type)
+    {
+        case DT_POINTER:
+        {
+            string->string[string->len] = 'P';
+            string->len++;
+            break;
+        }
+        case DT_INTEGER:
+        {
+            string->string[string->len] = 'I';
+            string->len++;
+            break;
+        }
+        case DT_DOUBLE:
+        {
+            string->string[string->len] = 'D';
+            string->len++;
+            break;
+        }
+        case DT_STRING:
+        {
+            data_string_append(string, 'S', 0);
+            break;
+        }
+        case DT_BOOLEAN:
+        {
+            string->string[string->len] = 'B';
+            string->len++;
+            break;
+        }
+        case DT_JSON:
+        {
+            data_string_append(string, 'J', 0);
+            break;
+        }
+    }
+}
+
+void data_storage_append(DataStorage* storage, DataValue value)
+{
+    DataString* string = data_storage_value_to_string(value);
+    
     if(storage->index && storage->list)
     {
-        data_index_append(storage->index, 0, value->len-1);
-        data_list_append(storage->list, value->string, value->len);
+        data_index_append(storage->index, 0, string->len-1);
+        data_list_append(storage->list, string->string, string->len);
 
         storage->list_size++;
+
+        data_string_free(string);
 
         return;
     }
@@ -1018,31 +1175,36 @@ void data_storage_append(DataStorage* storage, DataString* value)
         data_index_append(
             storage->index,
             storage->elements->len,
-            storage->elements->len + value->len - 1
+            storage->elements->len + string->len - 1
         );
 
         data_string_append_string(
             storage->elements, 
-            value->string, 
-            value->len, 
+            string->string, 
+            string->len, 
             DATASTORE_BUFFER
         );
 
         storage->list_size++;
 
+        data_string_free(string);
+
         return;
     }
 
-    data_string_replace(&SEPARATOR, &SEPARATOR_REPLACE, value);
+    if(value.type == DT_STRING || value.type == DT_JSON)
+        data_string_replace(&SEPARATOR, &SEPARATOR_REPLACE, string);
+
+    data_storage_string_append_type(string, value.type);
 
     bool reallocated = false;
 
-    // The value->len+1 is for extra ~ added at start
-    if(value->len+1 > storage->elements->buffer)
+    // The string.len+1 is for extra ~ added at start
+    if(string->len+1 > storage->elements->buffer)
     {
         storage->elements->string = dsrealloc(
             storage->elements->string,
-            storage->elements->len + value->len+1 + DATASTORE_BUFFER
+            storage->elements->len + string->len+1 + DATASTORE_BUFFER
         );
 
         storage->elements->buffer = DATASTORE_BUFFER;
@@ -1054,28 +1216,34 @@ void data_storage_append(DataStorage* storage, DataString* value)
 
     memcpy(
         &(storage->elements->string[storage->elements->len+1]),
-        value->string,
-        value->len
+        string->string,
+        string->len
     );
 
-    storage->elements->len += value->len+1;
+    storage->elements->len += string->len+1;
 
     if(!reallocated)
     {
-        storage->elements->buffer -= value->len+1;
+        storage->elements->buffer -= string->len+1;
     }
 
     storage->list_size++;
+
+    data_string_free(string);
 }
 
-void data_storage_prepend(DataStorage* storage, DataString* value)
+void data_storage_prepend(DataStorage* storage, DataValue value)
 {
+    DataString* string = data_storage_value_to_string(value);
+
     if(storage->index && storage->list)
     {
-        data_index_prepend(storage->index, 0, value->len-1);
-        data_list_prepend(storage->list, value->string, value->len);
+        data_index_prepend(storage->index, 0, string->len-1);
+        data_list_prepend(storage->list, string->string, string->len);
 
         storage->list_size++;
+
+        data_string_free(string);
 
         return;
     }
@@ -1085,19 +1253,19 @@ void data_storage_prepend(DataStorage* storage, DataString* value)
         data_index_prepend(
             storage->index,
             0,
-            value->len - 1
+            string->len - 1
         );
 
         data_string_prepend_string(
             storage->elements, 
-            value->string, 
-            value->len, 
+            string->string, 
+            string->len, 
             DATASTORE_BUFFER
         );
 
         if(storage->index->count > 1)
         {
-            size_t shift = value->len;
+            size_t shift = string->len;
 
             for(size_t i=1; i<storage->index->count; i++)
             {
@@ -1106,23 +1274,30 @@ void data_storage_prepend(DataStorage* storage, DataString* value)
             }
         }
 
+        storage->list_size++;
+
+        data_string_free(string);
+
         return;
     }
 
-    data_string_replace(&SEPARATOR, &SEPARATOR_REPLACE, value);
+    if(value.type == DT_STRING || value.type == DT_JSON)
+        data_string_replace(&SEPARATOR, &SEPARATOR_REPLACE, string);
 
-    if(value->len+1 > storage->elements->buffer)
+    data_storage_string_append_type(string, value.type);
+
+    if(string->len+1 > storage->elements->buffer)
     {
         storage->elements->string = dsrealloc(
             storage->elements->string,
-            storage->elements->len + value->len+1 + DATASTORE_BUFFER
+            storage->elements->len + string->len+1 + DATASTORE_BUFFER
         );
 
         storage->elements->buffer = DATASTORE_BUFFER;
     }
 
     memmove(
-        storage->elements->string+(value->len+1),
+        storage->elements->string+(string->len+1),
         storage->elements->string,
         storage->elements->len
     );
@@ -1131,15 +1306,15 @@ void data_storage_prepend(DataStorage* storage, DataString* value)
 
     memcpy(
         storage->elements->string+1,
-        value->string,
-        value->len
+        string->string,
+        string->len
     );
 
-    storage->elements->len += value->len+1;
+    storage->elements->len += string->len+1;
 
-    if(value->len+1 < storage->elements->buffer)
+    if(string->len+1 < storage->elements->buffer)
     {
-        storage->elements->buffer -= value->len+1;
+        storage->elements->buffer -= string->len+1;
     }
     else
     {
@@ -1150,22 +1325,26 @@ void data_storage_prepend(DataStorage* storage, DataString* value)
 }
 
 bool data_storage_edit(
-    DataStorage* storage, size_t position, DataString* value
+    DataStorage* storage, size_t position, DataValue value
 )
 {
     if(position >= storage->list_size || storage->list_size == 0)
         return false;
 
+    DataString* string = data_storage_value_to_string(value);
+
     if(storage->index && storage->list)
     {
-        return
-            data_index_edit(storage->index, position, 0, value->len-1)
+        bool result =
+            data_index_edit(storage->index, position, 0, string->len-1)
             &&
-            data_list_edit(storage->list, position, value->string, value->len)
+            data_list_edit(storage->list, position, string->string, string->len)
         ;
-    }
 
-    data_string_replace(&SEPARATOR, &SEPARATOR_REPLACE, value);
+        data_string_free(string);
+
+        return result;
+    }
 
     if(storage->index)
     {
@@ -1173,17 +1352,17 @@ bool data_storage_edit(
 
         data_index_get(storage->index, position, &start, &end);
 
-        data_string_replace_position(storage->elements, value, start, end);
+        data_string_replace_position(storage->elements, string, start, end);
 
         previous_len = end - start + 1;
 
         storage->index->end[position] = storage->index->start[position] 
-            + value->len - 1
+            + string->len - 1
         ;
 
-        if(previous_len > value->len)
+        if(previous_len > string->len)
         {
-            size_t unshift = previous_len - value->len;
+            size_t unshift = previous_len - string->len;
 
             if(storage->index->count > 1)
             {
@@ -1194,9 +1373,9 @@ bool data_storage_edit(
                 }
             }
         }
-        else if(previous_len < value->len)
+        else if(previous_len < string->len)
         {
-            size_t shift = value->len - previous_len;
+            size_t shift = string->len - previous_len;
 
             if(storage->index->count > 1)
             {
@@ -1208,23 +1387,32 @@ bool data_storage_edit(
             }
         }
 
+        data_string_free(string);
+
         return true;
     }
 
-    DataString current_value = data_storage_get(storage, position);
+    if(value.type == DT_STRING || value.type == DT_JSON)
+        data_string_replace(&SEPARATOR, &SEPARATOR_REPLACE, string);
+
+    data_storage_string_append_type(string, value.type);
+
+    DataString current_value = data_storage_get_raw(storage, position);
 
     data_string_replace_position(
         storage->elements, 
-        value, 
+        string, 
         current_value.string - storage->elements->string,
         (current_value.string - storage->elements->string) 
         + current_value.len - 1
     );
 
+    data_string_free(string);
+
     return true;
 }
 
-DataString data_storage_get(DataStorage* storage, size_t position)
+DataString data_storage_get_raw(DataStorage* storage, size_t position)
 {
     DataString data = {"", 0, 0};
 
@@ -1308,12 +1496,239 @@ DataString data_storage_get(DataStorage* storage, size_t position)
         }
     }
 
+    data = data_storage_get_current_raw(storage);
+
+    return data;
+}
+
+DataValue data_storage_get(DataStorage* storage, size_t position)
+{
+    DataValue data;
+
+    if(position >= storage->list_size)
+    {
+        data_value_set_string(data, "", 0, 0);
+        return data;
+    }
+
+    if(storage->index && storage->list)
+    {
+        size_t end;
+
+        data_index_get(
+            storage->index,
+            position,
+            (void*) NULL, &end
+        );
+
+        data_storage_value_from_bytes(
+            &data, 
+            storage->list->items[position],
+            (storage->list->items[position] + end)
+                - storage->list->items[position]
+                + 1
+        );
+
+        return data;
+    }
+    else if(storage->index)
+    {
+        size_t start, end;
+
+        data_index_get(
+            storage->index,
+            position,
+            &start, &end
+        );
+
+        data_storage_value_from_bytes(
+            &data, 
+            storage->elements->string+start,
+            end - start + 1
+        );
+
+        return data;
+    }
+
+    double target_percent = 100
+        * (
+            (double) position / (double) storage->list_size-1
+        )
+    ;
+    double current_percent = 100
+        * (
+            (double) storage->current_item / (double) storage->list_size-1
+        )
+    ;
+
+    if(target_percent == current_percent)
+    {
+        // We don't need to move
+    }
+    else if(target_percent > current_percent)
+    {
+        if(target_percent - current_percent > 100 - target_percent)
+        {
+            data_storage_forward(storage, storage->list_size-1);
+            data_storage_rewind(storage, position);
+        }
+        else
+        {
+            data_storage_forward(storage, position);
+        }
+    }
+    else
+    {
+        if(current_percent - target_percent > target_percent)
+        {
+            data_storage_rewind(storage, 0);
+            data_storage_forward(storage, position);
+        }
+        else
+        {
+            data_storage_rewind(storage, position);
+        }
+    }
+
     data = data_storage_get_current(storage);
 
     return data;
 }
 
-DataString data_storage_get_current(DataStorage* storage)
+DataValue data_storage_get_current(DataStorage* storage)
+{
+    DataValue data;
+
+    size_t position = storage->current_item;
+
+    if(position >= storage->list_size)
+    {
+        data_value_set_string(data, "", 0, 0);
+        return data;
+    }
+
+    if(storage->index && storage->list)
+    {
+        size_t end;
+
+        data_index_get(
+            storage->index,
+            position,
+            (void*) NULL, &end
+        );
+
+        data_storage_value_from_bytes(
+            &data, 
+            storage->list->items[position],
+            (storage->list->items[position] + end)
+                - storage->list->items[position]
+        );
+
+        return data;
+    }
+    else if(storage->index)
+    {
+        size_t start, end;
+
+        data_index_get(
+            storage->index,
+            position,
+            &start, &end
+        );
+
+        data_storage_value_from_bytes(
+            &data, 
+            storage->elements->string+start,
+            end - start
+        );
+
+        return data;
+    }
+
+    char* elements = storage->elements->string;
+
+    size_t elements_len = storage->elements->len,
+        i = storage->current_position,
+        len = 0
+    ;
+
+    i++; //Skip starting ~
+
+    // Empty value
+    if(i >= elements_len || elements[i] == '~')
+    {
+        data_value_set_string(data, "", 0, 0);
+        return data;
+    }
+
+    if(elements[i] != 'S' && elements[i] != 'J')
+    {
+        switch(elements[i])
+        {
+            case DT_POINTER:
+            {
+                data_value_set_pointer_from_bytes(
+                    data, 
+                    elements+i+1
+                );
+                break;
+            }
+            case DT_INTEGER:
+            {
+                data_value_set_integer_from_bytes(
+                    data, 
+                    elements+i+1
+                );
+                break;
+            }
+            case DT_DOUBLE:
+            {
+                data_value_set_double_from_bytes(
+                    data, 
+                    elements+i+1
+                );
+                break;
+            }
+            case DT_BOOLEAN:
+            {
+                data_value_set_boolean_from_bytes(
+                    data, 
+                    elements[i+1]
+                );
+                break;
+            }
+        }
+
+        return data;
+    }
+
+    do
+    {
+        if(elements[i] == '\\' && elements[i+1] == '~')
+        {
+            len++;
+            i++;
+        }
+
+        len++;
+
+        i++;
+    }
+    while(i < elements_len && elements[i] != '~');
+
+    data_value_set_string_alloc(
+        data, 
+        elements+storage->current_position+2, // Start after ~
+        len - 2, // Strip S/J tags from len
+        0
+    );
+
+    data.type = elements[storage->current_position+1];
+
+    return data;
+}
+
+DataString data_storage_get_current_raw(DataStorage* storage)
 {
     DataString data = {"", 0, 0};
 
@@ -1335,7 +1750,6 @@ DataString data_storage_get_current(DataStorage* storage)
         );
 
         data.string = storage->list->items[position];
-
         data.len = (storage->list->items[position] + end)
             - storage->list->items[position]
             + 1
@@ -1354,7 +1768,7 @@ DataString data_storage_get_current(DataStorage* storage)
         );
 
         data.string = storage->elements->string+start;
-        data.len = end - start + 1;
+        data.len = end - start;
 
         return data;
     }
@@ -1388,9 +1802,7 @@ DataString data_storage_get_current(DataStorage* storage)
     }
     while(i < elements_len && elements[i] != '~');
 
-    size_t start_pos = storage->current_position+1;
-
-    data.string = &(storage->elements->string[start_pos]);
+    data.string = elements+storage->current_position+1;
     data.len = len;
 
     return data;
@@ -1415,7 +1827,7 @@ bool data_storage_remove(
 
     if(storage->index)
     {
-        size_t start, end, previous_len;
+        size_t start, end;
 
         data_index_get(storage->index, position, &start, &end);
 
@@ -1442,7 +1854,7 @@ bool data_storage_remove(
         return true;
     }
 
-    DataString current_value = data_storage_get(storage, position);
+    DataString current_value = data_storage_get_raw(storage, position);
     DataString replacement = {"", 0, 0};
 
     data_string_replace_position(
@@ -1475,9 +1887,9 @@ void data_storage_clear(DataStorage* storage)
     storage->current_position = 0;
 }
 
-DataString data_storage_get_next(DataStorage* storage)
+DataValue data_storage_get_next(DataStorage* storage)
 {
-    DataString data = {"", 0, 0};
+    DataValue data;
 
     if(storage->index && storage->list)
     {
@@ -1489,14 +1901,17 @@ DataString data_storage_get_next(DataStorage* storage)
             (void*) NULL, &end
         );
 
-        data.string = (char*) storage->list->items[storage->current_item];
+        data_storage_value_from_bytes(
+            &data, 
+            (char*) storage->list->items[storage->current_item],
+            (storage->list->items[storage->current_item] + end)
+                - storage->list->items[storage->current_item]
+        );
 
-        data.len = (storage->list->items[storage->current_item] + end)
-            - storage->list->items[storage->current_item]
-            + 1
-        ;
-
-        storage->current_item++;
+        if(storage->current_item+1 != storage->list_size)
+        {        
+            storage->current_item++;
+        }
 
         return data;
     }
@@ -1510,10 +1925,16 @@ DataString data_storage_get_next(DataStorage* storage)
             &start, &end
         );
 
-        data.string = storage->elements->string+start;
-        data.len = end - start + 1;
+        data_storage_value_from_bytes(
+            &data, 
+            storage->elements->string+start,
+            end - start
+        );
 
-        storage->current_item++;
+        if(storage->current_item+1 != storage->list_size)
+        {        
+            storage->current_item++;
+        }
 
         return data;
     }
@@ -1530,6 +1951,46 @@ DataString data_storage_get_next(DataStorage* storage)
     // Empty value
     if(elements[i] == '~')
     {
+        if(storage->current_item+1 != storage->list_size)
+        {
+            storage->current_item++;
+            storage->current_position = i;
+        }
+
+        data_value_set_string(data, "", 0, 0);
+        return data;
+    }
+
+    if(elements[i] != 'S' && elements[i] != 'J')
+    {
+        switch(elements[i])
+        {
+            case DT_POINTER:
+            {
+                data_value_set_pointer_from_bytes(data, elements+i+1);
+                i += sizeof(DataPointer)+2; // move to next ~
+                break;
+            }
+            case DT_INTEGER:
+            {
+                data_value_set_integer_from_bytes(data, elements+i+1);
+                i += sizeof(DataInteger)+2;
+                break;
+            }
+            case DT_DOUBLE:
+            {
+                data_value_set_double_from_bytes(data, elements+i+1);
+                i += sizeof(DataDouble)+2;
+                break;
+            }
+            case DT_BOOLEAN:
+            {
+                data_value_set_boolean_from_bytes(data, elements[i+1]);
+                i += 1 + 2;
+                break;
+            }
+        }
+
         if(storage->current_item+1 != storage->list_size)
         {
             storage->current_item++;
@@ -1553,31 +2014,22 @@ DataString data_storage_get_next(DataStorage* storage)
     }
     while(i < elements_len && elements[i] != '~');
 
-    size_t start_pos = storage->current_position+1;
+    data_value_set_string_alloc(
+        data, 
+        elements+storage->current_position+2,
+        len - 2, // Strip S/J tags from len
+        0
+    );
+
+    data.type = elements[storage->current_position+1];
 
     if(storage->current_item+1 != storage->list_size)
-    {
+    {        
         storage->current_item++;
         storage->current_position = i;
     }
 
-    data.string = &(storage->elements->string[start_pos]);
-    data.len = len;
-
     return data;
-}
-
-DataString* data_storage_get_next_copy(DataStorage* storage)
-{
-    if(storage->list_size == 0)
-    {
-        return NULL;
-    }
-
-    DataString data = data_storage_get_next(storage);
-    DataString* value = data_string_new(data.string, data.len, 0);
-
-    return value;
 }
 
 bool data_storage_forward(DataStorage* storage, size_t to)
@@ -1609,7 +2061,26 @@ bool data_storage_forward(DataStorage* storage, size_t to)
 
         do
         {
-            i--;
+            i--; // Skip ~
+
+            if(elements[i] != 'S' && elements[i] != 'J')
+            {
+                switch(elements[i])
+                {
+                    case DT_POINTER:
+                        i -= sizeof(DataPointer)+2;
+                        break;
+                    case DT_INTEGER:
+                        i -= sizeof(DataInteger)+2;
+                        break;
+                    case DT_DOUBLE:
+                        i -= sizeof(DataDouble)+2;
+                        break;
+                    case DT_BOOLEAN:
+                        i -= 1 + 2;
+                        break;
+                }
+            }
         }
         while(i > 0 && (elements[i] != '~' || elements[i-1] == '\\'));
 
@@ -1633,6 +2104,27 @@ bool data_storage_forward(DataStorage* storage, size_t to)
         {
             storage->current_item++;
             storage->current_position = i;
+
+            continue;
+        }
+
+        if(elements[i] != 'S' && elements[i] != 'J')
+        {
+            switch(elements[i])
+            {
+                case DT_POINTER:
+                    i += sizeof(DataPointer)+2;
+                    break;
+                case DT_INTEGER:
+                    i += sizeof(DataInteger)+2;
+                    break;
+                case DT_DOUBLE:
+                    i += sizeof(DataDouble)+2;
+                    break;
+                case DT_BOOLEAN:
+                    i += 1 + 2;
+                    break;
+            }
 
             continue;
         }
@@ -1693,6 +2185,25 @@ bool data_storage_rewind(DataStorage* storage, size_t to)
         do
         {
             i--;
+
+            if(elements[i] != 'S' && elements[i] != 'J')
+            {
+                switch(elements[i])
+                {
+                    case DT_POINTER:
+                        i -= sizeof(DataPointer)+2;
+                        break;
+                    case DT_INTEGER:
+                        i -= sizeof(DataInteger)+2;
+                        break;
+                    case DT_DOUBLE:
+                        i -= sizeof(DataDouble)+2;
+                        break;
+                    case DT_BOOLEAN:
+                        i -= 1 + 2;
+                        break;
+                }
+            }
         }
         while(i > 0 && (elements[i] != '~' || elements[i-1] == '\\'));
 

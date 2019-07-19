@@ -46,6 +46,157 @@ typedef struct _DataStorage {
     size_t current_position;
 } DataStorage;
 
+typedef enum _DataType {
+    DT_POINTER  = 'P',
+    DT_INTEGER  = 'I',
+    DT_DOUBLE   = 'D',
+    DT_STRING   = 'S',
+    DT_BOOLEAN  = 'B',
+    DT_JSON     = 'J'
+} DataType;
+
+typedef union _DataInteger {
+    char bytes[sizeof(size_t)];
+    size_t value;
+} DataInteger;
+
+typedef union _DataDouble {
+    char bytes[sizeof(double)];
+    double value;
+} DataDouble;
+
+typedef union _DataPointer {
+    char bytes[sizeof(void*)];
+    void* value;
+} DataPointer;
+
+typedef union _DataBool {
+    char bytes[sizeof(bool)];
+    bool value;
+} DataBool;
+
+typedef union _DataValues {
+    DataInteger integer;
+    DataDouble double_float;
+    DataPointer pointer;
+    DataBool boolean;
+    DataString string;
+    DataString* string_alloc;
+} DataValues;
+
+typedef struct _DataValue {
+    DataValues value;
+    DataType type;
+    bool alloc_str;
+} DataValue;
+
+#define data_value_free(name) \
+    if(name.alloc_str){ \
+        data_string_free(name.value.string_alloc); \
+    }
+    
+#define data_value_define_string(name, val, size, buf) \
+    DataValue name; \
+    name.type = DT_STRING; \
+    name.alloc_str = true; \
+    name.value.string_alloc = data_string_new(val, size, buf+1); \
+    name.value.string_alloc->string[size] = '\0'
+
+#define data_value_define_json(name, val, size, buf) \
+    DataValue name; \
+    name.type = DT_JSON; \
+    name.alloc_str = true; \
+    name.value.string_alloc = data_string_new(val, size, buf)
+
+#define data_value_define_integer(name, val) \
+    DataValue name; \
+    name.type = DT_INTEGER; \
+    name.alloc_str = false; \
+    name.value.integer.value = val
+
+#define data_value_define_double(name, val) \
+    DataValue name; \
+    name.type = DT_DOUBLE; \
+    name.alloc_str = false; \
+    name.value.double_float.value = val
+
+#define data_value_define_pointer(name, val) \
+    DataValue name; \
+    name.type = DT_POINTER; \
+    name.alloc_str = false; \
+    name.value.pointer.value = val
+
+#define data_value_define_boolean(name, val) \
+    DataValue name; \
+    name.type = DT_BOOLEAN; \
+    name.alloc_str = false; \
+    name.value.boolean.value = val
+
+#define data_value_set_string(name, val, size, buf) \
+    name.type = DT_STRING; \
+    name.alloc_str = false; \
+    name.value.string.string = val; \
+    name.value.string.len = size; \
+    name.value.string.buffer = buf
+
+#define data_value_set_string_alloc(name, val, size, buf) \
+    name.type = DT_STRING; \
+    name.alloc_str = true; \
+    name.value.string_alloc = data_string_new(val, size, buf+1); \
+    name.value.string_alloc->string[size] = '\0'
+
+#define data_value_set_json(name, val, size) \
+    name.type = DT_JSON; \
+    name.alloc_str = false; \
+    name.value.string.string = val; \
+    name.value.string.len = size; \
+    name.value.string.buffer = buf
+
+#define data_value_set_json_alloc(name, val, size, buf) \
+    name.type = DT_JSON; \
+    name.alloc_str = true; \
+    name.value.string_alloc = data_string_new(val, size, buf+1); \
+    name.value.string_alloc->string[size] = '\0'
+
+#define data_value_set_integer(name, val) \
+    name.type = DT_INTEGER; \
+    name.alloc_str = false; \
+    name.value.integer.value = val
+
+#define data_value_set_double(name, val) \
+    name.type = DT_DOUBLE; \
+    name.alloc_str = false; \
+    name.value.double_float.value = val
+
+#define data_value_set_pointer(name, val) \
+    name.type = DT_POINTER; \
+    name.alloc_str = false; \
+    name.value.pointer.value = val
+
+#define data_value_set_boolean(name, val) \
+    name.type = DT_BOOLEAN; \
+    name.alloc_str = false; \
+    name.value.boolean.value = val
+
+#define data_value_set_integer_from_bytes(name, byte) \
+    name.type = DT_INTEGER; \
+    name.alloc_str = false; \
+    memcpy(name.value.integer.bytes, byte, sizeof(DataInteger))
+
+#define data_value_set_double_from_bytes(name, byte) \
+    name.type = DT_DOUBLE; \
+    name.alloc_str = false; \
+    memcpy(name.value.double_float.bytes, byte, sizeof(DataDouble))
+
+#define data_value_set_pointer_from_bytes(name, byte) \
+    name.type = DT_POINTER; \
+    name.alloc_str = false; \
+    memcpy(name.value.pointer.bytes, byte, sizeof(DataPointer))
+
+#define data_value_set_boolean_from_bytes(name, byte) \
+    name.type = DT_BOOLEAN; \
+    name.alloc_str = false; \
+    name.value.boolean.bytes[0] = byte
 
 DataIndex* data_index_new(size_t buffer);
 
@@ -149,20 +300,24 @@ DataStorage* data_storage_new_with_index_and_list();
 void data_storage_free(DataStorage* storage);
 
 void data_storage_append(
-    DataStorage* storage, DataString* value
+    DataStorage* storage, DataValue value
 );
 
 void data_storage_prepend(
-    DataStorage* storage, DataString* value
+    DataStorage* storage, DataValue value
 );
 
 bool data_storage_edit(
-    DataStorage* storage, size_t position, DataString* value
+    DataStorage* storage, size_t position, DataValue value
 );
 
-DataString data_storage_get(DataStorage* storage, size_t position);
+DataValue data_storage_get(DataStorage* storage, size_t position);
 
-DataString data_storage_get_current(DataStorage* storage);
+DataString data_storage_get_raw(DataStorage* storage, size_t position);
+
+DataValue data_storage_get_current(DataStorage* storage);
+
+DataString data_storage_get_current_raw(DataStorage* storage);
 
 bool data_storage_remove(
     DataStorage* storage, size_t position
@@ -172,9 +327,7 @@ size_t data_storage_size(const DataStorage* storage);
 
 void data_storage_clear(DataStorage* storage);
 
-DataString data_storage_get_next(DataStorage* storage);
-
-DataString* data_storage_get_next_copy(DataStorage* storage);
+DataValue data_storage_get_next(DataStorage* storage);
 
 bool data_storage_forward(DataStorage* storage, size_t to);
 

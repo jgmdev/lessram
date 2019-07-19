@@ -3,21 +3,21 @@
 echo "=======================================================================\n";
 echo "String store test with native C extension:\n";
 echo "=======================================================================\n";
-test_storeStrings(1024*1024, false);
+test_storeStrings((1024*1024) * 2, false);
 
 echo "\n\n";
 
 echo "=======================================================================\n";
 echo "Array store test with native C extension:\n";
 echo "=======================================================================\n";
-test_storeArrays(1024*1024, false);
+test_storeArrays((1024*1024)*2, false);
 
 echo "\n\n";
 
 echo "=======================================================================\n";
 echo "Integers store test with native C extension:\n";
 echo "=======================================================================\n";
-test_storeIntegers(1024*1024, false);
+test_storeIntegers((1024*1024)*2, false);
 
 echo "\n";
 
@@ -649,7 +649,7 @@ function test_storeIntegers($amount=1024*1024, $real=false)
     $dynamic_add_time = microtime(true);
     for($i=0; $i<$amount; $i++)
     {
-        $list->appendData($i);
+        $list->append($i);
     }
     $dynamic_add_time = microtime(true) - $dynamic_add_time;
 
@@ -674,7 +674,7 @@ function test_storeIntegers($amount=1024*1024, $real=false)
     $dynamic_m_add_time = microtime(true);
     for($i=0; $i<$amount; $i++)
     {
-        $list->appendData($i);
+        $list->append($i);
     }
     $dynamic_m_add_time = microtime(true) - $dynamic_m_add_time;
 
@@ -699,7 +699,7 @@ function test_storeIntegers($amount=1024*1024, $real=false)
     $dynamic_l_add_time = microtime(true);
     for($i=0; $i<$amount; $i++)
     {
-        $list->appendData($i);
+        $list->append($i);
     }
     $dynamic_l_add_time = microtime(true) - $dynamic_l_add_time;
 

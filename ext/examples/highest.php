@@ -29,7 +29,6 @@ for($i=0; $i<$amount; $i++)
 }
 $time_edit_end = (microtime(true) - $time_edit);
 
-// This kind of stuff isn't supported (we don't store zvals)
 unset($list[2]);
 unset($list[3]);
 
